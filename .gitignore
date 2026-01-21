@@ -28,5 +28,22 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# Wails specific
+build/bin/
+node_modules/
+frontend/dist/
+frontend/wailsjs/
+
+# Runtime data
+windows.json
+
+# OS specific
+.DS_Store
+Thumbs.db
+*~

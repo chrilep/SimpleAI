@@ -1,0 +1,50 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+}
+
+.radio-controls {
+    display: flex;
+    gap: 20px;
+    padding: 15px 20px;
+    background-color: rgba(27, 38, 54, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.2s ease;
+}
+
+.radio-label:hover {
+    color: rgba(255, 255, 255, 1);
+}
+
+.radio-input {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: #00d4ff;
+}
+
+.webview-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.webview {
+    width: 100%;
+    height: 100%;
+    border: none;
+}

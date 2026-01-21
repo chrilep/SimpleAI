@@ -1,0 +1,41 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0] - 2026-01-21
+
+### Added
+
+- **Multi-Service Launcher** - Quick access to 8 major AI chatbot services:
+  - ChatGPT (OpenAI GPT-4/5)
+  - Claude (Anthropic Sonnet)
+  - Copilot (Microsoft)
+  - Deepseek (V3.2)
+  - Gemini (Google 2.0/2.5)
+  - Grok (X/Twitter)
+  - Meta AI (LLaMA)
+  - Perplexity (AI Research)
+- **Frameless Custom Title Bar** - Modern UI for launcher window with minimize/close controls
+- **Window Position Persistence** - Automatically saves and restores window positions and sizes across sessions
+- **Multi-Instance Support** - Open multiple AI services simultaneously in separate windows
+- **Service Information Modals** - Info button (?) on each service showing detailed descriptions and use cases
+- **Responsive Layout** - Grid layout adapts to window size with fixed service button dimensions
+- **Drag-to-Move** - Entire launcher window draggable via custom title bar
+- **Cross-Platform Support** - Runs on Windows, macOS, and Linux
+- **Auto-Generated Bindings** - Wails framework automatically generates JavaScript bindings from Go methods
+- **Development Scripts** - `dev.ps1` for hot reload development, `build.ps1` for production builds
+- **Window Position Manager** - Reusable module with automatic platform offset compensation for Windows titlebar/borders
+- **Race Condition Fix** - Multi-instance safe window position saving with file reload before write
+
+### Technical Details
+
+- Built with Wails v2.10.2 + Go 1.23
+- Frontend: Vanilla JavaScript + Vite 3.x + CSS
+- Rendering: WebView2 (Windows), WebKit (macOS/Linux)
+- Storage: JSON file for window positions
+- License: GNU AGPL-3.0
+
+[1.0.0]: https://github.com/chrilep/SimpleAI/releases/tag/v1.0.0

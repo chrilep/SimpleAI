@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "SimpleAI",
+  "info": {
+    "companyName": "Lancer",
+    "productVersion": "1.0.0",
+    "copyright": "(c) Lancer, AGPLv3 License",
+    "comments": "Simple frontend for some AI chatbots."
+  },
+  "outputfilename": "SimpleAI",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Christian",
+    "email": "christian@lepthien.info"
+  }
+}
