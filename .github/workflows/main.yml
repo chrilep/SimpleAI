@@ -41,8 +41,9 @@ jobs:
         id: version
         shell: pwsh
         run: |
-          $version = (Get-Content wails.json | ConvertFrom-Json).info.productVersion
-          echo "version=$version" >> $env:GITHUB_OUTPUT
+          $v = (Get-Content wails.json | ConvertFrom-Json).info.productVersion
+          $beta = "$v.BETA"
+          echo "version=$beta" >> $env:GITHUB_OUTPUT
 
       - name: Build application
         shell: pwsh
@@ -53,22 +54,35 @@ jobs:
             exit $LASTEXITCODE
           }
 
-      - name: Build NSIS installer
+      - name: Rename EXE with version
         shell: pwsh
         run: |
-          wails build -nsis -ldflags "-X main.Version=${{ steps.version.outputs.version }}"
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Installer creation failed!" -ForegroundColor Yellow
-          }
+          $v = "${{ steps.version.outputs.version }}"
+          Rename-Item "build/bin/SimpleAI.exe" "SimpleAI $v.exe"
 
-      - name: Upload Binary
+      - name: Create ZIP
+        shell: pwsh
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          Compress-Archive -Path "build/bin/SimpleAI $v.exe" -DestinationPath "SimpleAI $v.zip"
+
+      - name: Upload Beta ZIP
         uses: actions/upload-artifact@v4
         with:
-          name: SimpleAI-windows-binary
-          path: build/bin/*.exe
+          name: SimpleAI-${{ steps.version.outputs.version }}-beta
+          path: "SimpleAI ${{ steps.version.outputs.version }}.zip"
 
-      - name: Upload Installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: SimpleAI-windows-installer
-          path: build/bin/*installer.exe
+      - name: Publish ZIP into repo
+        if: github.ref_type == 'branch'
+        shell: pwsh
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+      
+          mkdir downloads -ErrorAction Ignore
+      
+          Copy-Item "SimpleAI ${{ steps.version.outputs.version }}.zip" "downloads/"
+      
+          git add downloads
+          git commit -m "Add beta/prerelease ${{ steps.version.outputs.version }}"
+          git push
