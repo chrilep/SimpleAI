@@ -70,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SimpleAI-${{ steps.version.outputs.version }}-beta
-          path: "SimpleAI ${{ steps.version.outputs.version }}.zip"
+          path: "SimpleAI ${{ steps.version.outputs.version }} windows.zip"
 
       - name: Publish ZIP into repo
         if: github.ref_type == 'branch'
@@ -81,7 +81,7 @@ jobs:
       
           mkdir downloads -ErrorAction Ignore
       
-          Copy-Item "SimpleAI ${{ steps.version.outputs.version }}.zip" "downloads/"
+          Copy-Item "SimpleAI ${{ steps.version.outputs.version }}.zip" "automated-beta-builds/"
       
           git add downloads
           git commit -m "Add beta/prerelease ${{ steps.version.outputs.version }}"
