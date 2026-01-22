@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-22
+
+### Added
+
+- **Persistent WebView Storage** - Cookies, sessions, and cache now persist across application restarts
+  - WebView data stored in system cache directory: `%LOCALAPPDATA%\SimpleAI\webview` (Windows) or `~/.cache/SimpleAI/webview` (Linux/macOS)
+  - Maintains login sessions for all AI services between launches
+  - Separate storage per AI service via command-line arguments
+
+### Fixed
+
+- **Linux Window Position Bug** - Fixed 10x10 pixel window position issue on SUSE Linux and other distributions
+  - Enhanced debugging for window position detection on Linux platforms
+  - Improved xdotool fallback mechanism for reliable position tracking
+
 ## [1.0.1] - 2026-01-22
 
 ### Added
