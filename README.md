@@ -1,6 +1,6 @@
 # SimpleAI
 
-![SimpleAI Icon](img/repoIcon.png)
+![SimpleAI Icon](img/appExample3.png)
 
 > A lightweight desktop launcher for multiple AI chatbot services in dedicated windows
 
