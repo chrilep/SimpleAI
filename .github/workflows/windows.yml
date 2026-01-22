@@ -27,14 +27,11 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install NSIS
-        run: choco install nsis -y
-
       - name: Install Wails
         timeout-minutes: 15
         env:
-          GOFLAGS: "-v"
-          GOTOOLCHAIN: "local"
+          GOFLAGS: "-v"          # force verbose output
+          GOTOOLCHAIN: "local"   # prevent auto-upgrade to Go 1.23+
         run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Read version from wails.json
