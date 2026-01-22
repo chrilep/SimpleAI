@@ -3,9 +3,9 @@ name: Build SimpleAI (Windows Only)
 on:
   push:
     branches:
-      - "**"        # prerelease builds on every push
+      - "**"
     tags:
-      - "v*"        # full releases on version tags
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -30,8 +30,8 @@ jobs:
       - name: Install Wails
         timeout-minutes: 15
         env:
-          GOFLAGS: "-v"          # force verbose output
-          GOTOOLCHAIN: "local"   # prevent auto-upgrade to Go 1.23+
+          GOFLAGS: "-v"
+          GOTOOLCHAIN: "local"
         run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Read version from wails.json
@@ -55,13 +55,13 @@ jobs:
         shell: pwsh
         run: |
           $v = "${{ steps.version.outputs.version }}"
-          Rename-Item "build/bin/SimpleAI.exe" "SimpleAI $v.exe"
+          Rename-Item "build/bin/SimpleAI.exe" "build/bin/SimpleAI $v.exe"
 
       - name: Upload Prerelease EXE
         uses: actions/upload-artifact@v4
         with:
           name: SimpleAI-${{ steps.version.outputs.version }}-pre
-          path: "SimpleAI ${{ steps.version.outputs.version }}.exe"
+          path: "build/bin/SimpleAI ${{ steps.version.outputs.version }}.exe"
 
       - name: Publish into repo
         if: github.ref_type == 'branch'
@@ -72,7 +72,7 @@ jobs:
 
           mkdir automated-prereleases -ErrorAction Ignore
 
-          Copy-Item "SimpleAI ${{ steps.version.outputs.version }}.exe" "automated-prereleases/"
+          Copy-Item "build/bin/SimpleAI ${{ steps.version.outputs.version }}.exe" "automated-prereleases/"
 
           git add automated-prereleases
           git commit -m "Add prerelease ${{ steps.version.outputs.version }}"
