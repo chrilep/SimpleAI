@@ -4,11 +4,13 @@ import (
 	"context"
 	"embed"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
@@ -29,8 +31,16 @@ func main() {
 	// Launcher gets frameless window for custom title bar
 	frameless := startupService == ""
 
+	// Get user data directory for WebView storage (cookies, sessions, cache)
+	userDataDir, err := os.UserCacheDir()
+	if err != nil {
+		// Fallback to config dir if cache dir fails
+		userDataDir, _ = os.UserConfigDir()
+	}
+	webviewDataPath := filepath.Join(userDataDir, "SimpleAI", "webview")
+
 	// Create application with options
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:     "SimpleAI",
 		Width:     1024,
 		Height:    768,
@@ -56,8 +66,12 @@ func main() {
 			app,
 		},
 		Windows: &windows.Options{
-			WebviewUserDataPath: "",
+			WebviewUserDataPath: webviewDataPath,
 			WebviewBrowserPath:  "",
+		},
+		Linux: &linux.Options{
+			WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand,
+			ProgramName:      "SimpleAI",
 		},
 	})
 

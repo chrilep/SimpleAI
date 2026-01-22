@@ -161,11 +161,12 @@ SimpleAI stores configuration data in your system's standard config directory:
 
 - **Windows:** `%APPDATA%\SimpleAI\`
 - **macOS:** `~/Library/Application Support/SimpleAI/`
-- **Linux:** `~/.config/SimpleAI/`
+- **Linux:** `~/.config/SimpleAI/` (config) and `~/.cache/SimpleAI/` (webview data)
 
 Stored files:
 
 - `windows.json` - Window positions and sizes
+- `webview/` - Browser sessions, cookies, and cache (persists logins)
 
 ### Linux Requirements
 
