@@ -18,8 +18,15 @@ These are **development builds** and may contain:
 Currently, automated prerelease builds are available for:
 
 - ✅ **Windows** (64-bit)
+- ✅ **Linux** (64-bit)
 
-Additional platforms may be added in the future.
+**Note for Linux users**: Install `xdotool` for window position persistence:
+
+```bash
+sudo apt-get install xdotool
+```
+
+Additional platforms (macOS) may be added in the future.
 
 ## Build Frequency
 
@@ -27,13 +34,28 @@ Additional platforms may be added in the future.
 - **Automation**: Builds are generated automatically via CI/CD pipeline
 - **Version**: Each build includes the commit hash for traceability
 
+## Versioning
+
+Prerelease builds are named with the format: `SimpleAI <version>.PRE.exe` (Windows) or `SimpleAI-<version>.PRE` (Linux)
+
+- Version number comes from `wails.json` → `info.productVersion`
+- `.PRE` suffix indicates prerelease/development build
+- Each build corresponds to a specific commit in the repository
+
 ## Usage
 
-1. Download the latest Windows binary from this folder
-2. Extract the executable (if archived)
-3. Run SimpleAI.exe
+**Windows:**
 
-**Note**: These builds are unsigned and may trigger Windows SmartScreen warnings.
+1. Download the latest `SimpleAI <version>.PRE.exe` from this folder
+2. Run the executable directly
+3. Note: Builds are unsigned and may trigger Windows SmartScreen warnings
+
+**Linux:**
+
+1. Download the latest `SimpleAI-<version>.PRE` from this folder
+2. Make executable: `chmod +x SimpleAI-<version>.PRE`
+3. Run: `./SimpleAI-<version>.PRE`
+4. Install xdotool for window position memory: `sudo apt-get install xdotool`
 
 ## Feedback
 

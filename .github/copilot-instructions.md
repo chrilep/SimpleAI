@@ -49,7 +49,13 @@ Go Method (App struct) → Wails Binding → wailsjs/go/main/App.js → JavaScri
 ```
 ├── main.go              # Wails app initialization & entry point
 ├── app.go               # App struct with bindable methods
-├── wails.json           # Wails configuration
+├── wails.json           # Wails configuration (VERSION SOURCE)
+├── modWindowMemory/     # Reusable window position module
+│   ├── README.md        # Module documentation
+│   ├── windowposition.go           # Platform-independent logic
+│   ├── windowposition_windows.go   # Windows-specific implementation
+│   ├── windowposition_linux.go     # Linux-specific (xdotool fallback)
+│   └── windowposition_darwin.go    # macOS-specific implementation
 ├── frontend/            # Vite frontend
 │   ├── src/
 │   │   ├── main.js      # Entry point, calls Go methods
@@ -57,7 +63,9 @@ Go Method (App struct) → Wails Binding → wailsjs/go/main/App.js → JavaScri
 │   │   └── assets/      # Static images & fonts
 │   ├── wailsjs/         # AUTO-GENERATED - Go bindings (don't edit)
 │   └── package.json
-└── build/               # Build outputs & platform configs
+├── build/               # Build outputs & platform configs
+├── automated-prereleases/  # Automated prerelease builds (Windows/Linux)
+└── .github/workflows/   # CI/CD workflows for automated builds
 ```
 
 ## Critical Development Workflows
@@ -169,3 +177,69 @@ try {
 - **Browser Dev Tools:** Run dev server, connect to `http://localhost:34115`, inspect Network/Console
 - **Go Debug:** Use standard Go debugging with breakpoints in `app.go` and `main.go`
 - **Frontend Build Errors:** Check `frontend/src/` and `wails.json` config
+
+## Release Process & Versioning
+
+### Version Number Management
+
+**SINGLE SOURCE OF TRUTH**: `wails.json` → `info.productVersion`
+
+All version numbers derive from this field:
+
+- Build scripts inject it via `-ldflags "-X main.Version=x.x.x"`
+- CI/CD workflows read it for prerelease naming
+- Documentation should reference it as the canonical version
+
+### Creating a New Release
+
+**Required steps for version bump:**
+
+1. **Update `wails.json`**:
+
+   ```json
+   "productVersion": "X.Y.Z"
+   ```
+
+2. **Update `CHANGELOG.md`**:
+   - Add new `## [X.Y.Z] - YYYY-MM-DD` section
+   - Document all changes under Added/Changed/Fixed/Removed
+   - Keep formatting consistent with existing entries
+
+3. **Update `README.md`** (if needed):
+   - Update feature list for major changes
+   - Update screenshots for UI changes
+   - Update requirements for dependency changes
+
+4. **Commit and push**:
+
+   ```powershell
+   git add wails.json CHANGELOG.md README.md
+   git commit -m "vX.Y.Z: <brief summary>"
+   git push
+   ```
+
+5. **Automated builds trigger**:
+   - Windows and Linux prerelease builds auto-generate
+   - Binaries committed to `automated-prereleases/` folder
+   - Format: `SimpleAI X.Y.Z.PRE.exe` / `SimpleAI-X.Y.Z.PRE`
+
+### Version Number Scheme
+
+- **Major (X.0.0)**: Breaking changes, major feature additions
+- **Minor (x.Y.0)**: New features, non-breaking changes
+- **Patch (x.y.Z)**: Bug fixes, small improvements
+
+### Modules & Dependencies
+
+**modWindowMemory**: Reusable window position persistence module
+
+- Fully self-contained in `modWindowMemory/` directory
+- Platform-specific via Go build tags
+- Can be copied to other Wails projects without modification
+- Documentation in `modWindowMemory/README.md`
+
+**When updating modWindowMemory**:
+
+1. Test on all platforms (Windows/Linux/macOS if possible)
+2. Update `modWindowMemory/README.md` if API changes
+3. Document breaking changes in main `CHANGELOG.md`
