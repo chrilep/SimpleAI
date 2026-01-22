@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"SimpleAI/modWindowMemory"
+
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -16,7 +18,7 @@ var Version = "ersion dev"
 type App struct {
 	ctx            context.Context
 	startupService string
-	windowPosMgr   *WindowPositionManager
+	windowPosMgr   *modWindowMemory.WindowPositionManager
 	windowPosPath  string // Path to windows.json
 }
 
@@ -25,7 +27,7 @@ func NewApp() *App {
 	configDir, _ := os.UserConfigDir()
 
 	return &App{
-		windowPosMgr:  NewWindowPositionManager(),
+		windowPosMgr:  modWindowMemory.NewWindowPositionManager(),
 		windowPosPath: filepath.Join(configDir, "SimpleAI", "windows.json"),
 	}
 }

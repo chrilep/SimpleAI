@@ -3,7 +3,7 @@
   "name": "SimpleAI",
   "info": {
     "companyName": "Lancer",
-    "productVersion": "1.0.0",
+    "productVersion": "1.0.1",
     "copyright": "(c) Lancer, AGPLv3 License",
     "comments": "Simple frontend for some AI chatbots."
   },

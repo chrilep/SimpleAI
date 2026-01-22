@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-01-22
+
+### Added
+
+- **Linux Prerelease Builds** - Automated Linux builds now available via GitHub Actions workflow
+- **Automated Prerelease Workflow** - Both Windows and Linux binaries are automatically built and committed on every push
+- **Automated Prereleases Documentation** - Added README to `automated-prereleases/` folder explaining prerelease build system
+
+### Changed
+
+- **Window Position Module Refactored** - Extracted window position persistence into standalone `modWindowMemory` module
+  - Platform-specific implementations for Windows, Linux (with xdotool fallback), and macOS
+  - Full documentation in `modWindowMemory/README.md`
+  - Module is now portable and reusable across Wails projects
+  - Linux support improved with xdotool X11 fallback for reliable position tracking
+
+### Fixed
+
+- **Linux Window Position Tracking** - Implemented xdotool-based fallback for GTK window geometry issues
+  - Wails `WindowGetPosition()` on Linux/GTK often returns (0,0) - now handled gracefully
+  - Requires `xdotool` package for full functionality on Linux
+
 ## [1.0.0] - 2026-01-21
 
 ### Added

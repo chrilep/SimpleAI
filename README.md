@@ -18,11 +18,16 @@ SimpleAI is a cross-platform desktop application built with [Wails](https://wail
   - Meta AI (Facebook)
   - Perplexity
 
-- **Window Position Memory** - Remembers window positions and sizes across sessions
+- 💾 **Window Position Memory** - Remembers window positions and sizes across sessions
+  - Universal `modWindowMemory` module with platform-specific implementations
+  - Windows: Automatic titlebar offset compensation
+  - Linux: xdotool fallback for GTK compatibility
+  - macOS: Native coordinate system support
 - 🎨 **Modern UI** - Futuristic launcher design with smooth hover effects
 - 🪟 **Multi-Instance Support** - Open multiple AI services simultaneously in separate windows
 - 🖥️ **Cross-Platform** - Runs on Windows, macOS, and Linux
 - ⚡ **Native Performance** - Built with Go and WebView2 for fast, lightweight operation
+- 🤖 **Automated Builds** - Prerelease binaries for Windows and Linux on every commit
 
 ## 📦 Installation
 
@@ -85,7 +90,12 @@ This starts the Wails dev server with:
 SimpleAI/
 ├── app.go                 # Backend logic & Go methods
 ├── main.go                # Application entry point
-├── windowposition.go      # Window position management
+├── modWindowMemory/       # Reusable window position module
+│   ├── README.md          # Module documentation
+│   ├── windowposition.go  # Platform-independent logic
+│   ├── windowposition_windows.go
+│   ├── windowposition_linux.go
+│   └── windowposition_darwin.go
 ├── frontend/
 │   ├── src/
 │   │   ├── main.js        # Frontend logic & UI
@@ -93,8 +103,13 @@ SimpleAI/
 │   │   └── style.css      # Global styles
 │   └── wailsjs/           # Auto-generated Go bindings
 ├── build/                 # Build outputs
-└── wails.json             # Wails configuration
+├── automated-prereleases/ # Automated prerelease builds
+└── .github/workflows/     # CI/CD workflows
 ```
+
+└── wails.json # Wails configuration
+
+````
 
 ### Configuration
 
@@ -108,7 +123,7 @@ The project includes build scripts that automatically inject version numbers:
 
 ```powershell
 .\build.ps1  # Builds for Windows (amd64)
-```
+````
 
 ### Cross-Platform Builds
 
@@ -151,6 +166,16 @@ SimpleAI stores configuration data in your system's standard config directory:
 Stored files:
 
 - `windows.json` - Window positions and sizes
+
+### Linux Requirements
+
+For window position tracking on Linux, install xdotool:
+
+```bash
+sudo apt-get install xdotool
+```
+
+This is required because GTK window APIs don't reliably report window positions. Without xdotool, windows will open at default positions on startup.
 
 ## 🧩 Technology Stack
 
