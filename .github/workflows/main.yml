@@ -2,8 +2,11 @@ name: Build SimpleAI (Cross-Platform)
 
 on:
   push:
+    branches:
+      - "**"        # run on every branch push (prereleases)
     tags:
-      - "v*"
+      - "v*"        # run on version tags (releases)
+  workflow_dispatch: # allow manual runs
 
 jobs:
   build:
