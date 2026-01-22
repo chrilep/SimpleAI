@@ -1,4 +1,4 @@
-name: Build SimpleAI (Cross-Platform)
+name: Build SimpleAI (Windows Only)
 
 on:
   push:
@@ -6,15 +6,11 @@ on:
       - "**"        # run on every branch push (prereleases)
     tags:
       - "v*"        # run on version tags (releases)
-  workflow_dispatch: # allow manual runs
+  workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
+  build-windows:
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -24,36 +20,22 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
+          check-latest: false
 
       - name: Install Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Install Wails
-        timeout-minutes: 10
-        env:
-          GOFLAGS: "-v"
-        run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Install Linux dependencies (Ubuntu only)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.0-dev \
-            libglib2.0-dev \
-            libgdk-pixbuf2.0-dev \
-            libpango1.0-dev \
-            libatk1.0-dev \
-            libatk-bridge2.0-dev \
-            libcairo2-dev \
-            pkg-config
-
-      - name: Install NSIS (Windows only)
-        if: matrix.os == 'windows-latest'
+      - name: Install NSIS
         run: choco install nsis -y
+
+      - name: Install Wails (Windows)
+        timeout-minutes: 15
+        env:
+          GOFLAGS: "-v"          # force verbose output to avoid cancellation
+          GOTOOLCHAIN: "local"   # prevent auto-upgrade to Go 1.23
+        run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Read version from wails.json
         id: version
@@ -71,8 +53,7 @@ jobs:
             exit $LASTEXITCODE
           }
 
-      - name: Build NSIS installer (Windows only)
-        if: matrix.os == 'windows-latest'
+      - name: Build NSIS installer
         shell: pwsh
         run: |
           wails build -nsis -ldflags "-X main.Version=${{ steps.version.outputs.version }}"
@@ -83,11 +64,10 @@ jobs:
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
-          name: SimpleAI-${{ matrix.os }}-binary
-          path: build/bin/*
+          name: SimpleAI-windows-binary
+          path: build/bin/*.exe
 
-      - name: Upload Installer (Windows only)
-        if: matrix.os == 'windows-latest'
+      - name: Upload Installer
         uses: actions/upload-artifact@v4
         with:
           name: SimpleAI-windows-installer
