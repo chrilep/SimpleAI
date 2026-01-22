@@ -98,12 +98,13 @@ func getLinuxWindowGeometry() (x, y, width, height int, ok bool) {
 	println("[WindowPos] Found flags - X:", foundX, "Y:", foundY, "W:", foundWidth, "H:", foundHeight)
 
 	// Validate that we got reasonable values
-	if foundWidth && foundHeight && width > 0 && height > 0 {
+	// Reject suspiciously small windows (10x10 is typically a destroyed/closing window)
+	if foundWidth && foundHeight && width > 50 && height > 50 {
 		// Accept even if X/Y are 0 - could be valid screen position
 		return x, y, width, height, true
 	}
 
-	println("[WindowPos] Invalid or incomplete geometry data")
+	println("[WindowPos] Invalid or incomplete geometry data (too small or missing)")
 	return 0, 0, 0, 0, false
 }
 

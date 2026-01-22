@@ -64,7 +64,8 @@ func (a *App) startup(ctx context.Context) {
 // shutdown is called when the app is about to quit
 func (a *App) shutdown(ctx context.Context) {
 	println("[DEBUG] Shutdown - Service:", a.startupService, "PID:", os.Getpid())
-	a.windowPosMgr.SavePosition(ctx, a.GetWindowTitle(), a.windowPosPath)
+	// Note: Window position is already saved in OnBeforeClose hook (main.go)
+	// Don't save here as window may already be destroyed
 }
 
 // GetStartupService returns the service name to navigate to on startup
