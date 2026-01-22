@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=SimpleAI
+Comment=Simple frontend for AI chatbots
+Exec=SimpleAI
+Icon=SimpleAI
+Terminal=false
+Categories=Network;Chat;
+Keywords=AI;ChatGPT;Claude;Gemini;Copilot;
+StartupNotify=true

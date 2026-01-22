@@ -180,6 +180,16 @@ try {
 
 ## Release Process & Versioning
 
+### Git Workflow
+
+**IMPORTANT: No automatic Git operations!**
+
+- **DO NOT** run `git add`, `git commit`, or `git push` automatically after file changes
+- Developer handles all Git operations manually
+- Exception: Only perform Git operations when explicitly asked to "create a release"
+- For releases, use proper workflow, create all changelogs with tag creation and GitHub release
+- The developer will add the files to the releases page manually.
+
 ### Version Number Management
 
 **SINGLE SOURCE OF TRUTH**: `wails.json` → `info.productVersion`
@@ -191,6 +201,19 @@ All version numbers derive from this field:
 - Documentation should reference it as the canonical version
 
 ### Creating a New Release
+
+**When user requests a release, automatically check and update these files:**
+
+1. **`wails.json`** - Update `info.productVersion` to new version number
+2. **`CHANGELOG.md`** - Add new `## [X.Y.Z] - YYYY-MM-DD` section with all changes
+3. **`README.md`** - Update features, requirements, or version references if needed
+4. **`automated-prereleases/README.md`** - Update if build process or platform support changed
+
+After updating files, proceed with:
+
+- Git tag creation (`git tag vX.Y.Z`)
+- GitHub release creation using `gh release create`
+- Developer handles `git add`, `git commit`, `git push` manually
 
 **Required steps for version bump:**
 
@@ -210,7 +233,7 @@ All version numbers derive from this field:
    - Update screenshots for UI changes
    - Update requirements for dependency changes
 
-4. **Commit and push**:
+4. **Manual Git operations** (developer performs):
 
    ```powershell
    git add wails.json CHANGELOG.md README.md

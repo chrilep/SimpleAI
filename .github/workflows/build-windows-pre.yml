@@ -58,13 +58,13 @@ jobs:
         shell: pwsh
         run: |
           $v = "${{ steps.version.outputs.version }}"
-          Rename-Item -LiteralPath "build/bin/SimpleAI.exe" -NewName "SimpleAI $v.exe"
+          Rename-Item -LiteralPath "build/bin/SimpleAI.exe" -NewName "SimpleAI-windows $v.exe"
 
       - name: Upload Prerelease EXE
         uses: actions/upload-artifact@v4
         with:
-          name: SimpleAI-${{ steps.version.outputs.version }}.exe
-          path: "build/bin/SimpleAI ${{ steps.version.outputs.version }}.exe"
+          name: SimpleAI-windows-${{ steps.version.outputs.version }}.exe
+          path: "build/bin/SimpleAI-windows ${{ steps.version.outputs.version }}.exe"
 
       - name: Publish into repo
         if: github.ref_type == 'branch'
@@ -75,8 +75,8 @@ jobs:
 
           mkdir automated-prereleases -ErrorAction Ignore
 
-          Copy-Item "build/bin/SimpleAI ${{ steps.version.outputs.version }}.exe" "automated-prereleases/"
+          Copy-Item "build/bin/SimpleAI-windows ${{ steps.version.outputs.version }}.exe" "automated-prereleases/"
 
-          git add "automated-prereleases/SimpleAI ${{ steps.version.outputs.version }}.exe"
+          git add "automated-prereleases/SimpleAI-windows ${{ steps.version.outputs.version }}.exe"
           git commit -m "Add prerelease ${{ steps.version.outputs.version }}"
           git push
