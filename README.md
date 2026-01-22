@@ -171,8 +171,28 @@ Stored files:
 
 For window position tracking on Linux, install xdotool:
 
+**Debian/Ubuntu:**
+
 ```bash
 sudo apt-get install xdotool
+```
+
+**openSUSE/SUSE:**
+
+```bash
+sudo zypper install xdotool
+```
+
+**Fedora/RHEL:**
+
+```bash
+sudo dnf install xdotool
+```
+
+**Arch Linux:**
+
+```bash
+sudo pacman -S xdotool
 ```
 
 This is required because GTK window APIs don't reliably report window positions. Without xdotool, windows will open at default positions on startup.

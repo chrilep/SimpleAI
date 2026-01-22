@@ -25,7 +25,11 @@ import (
 // 3. Gracefully handle missing xdotool by skipping save
 //
 // Requirements for full functionality:
-// - xdotool must be installed: sudo apt-get install xdotool
+// - xdotool must be installed via package manager:
+//   Debian/Ubuntu: sudo apt-get install xdotool
+//   openSUSE/SUSE: sudo zypper install xdotool
+//   Fedora/RHEL: sudo dnf install xdotool
+//   Arch Linux: sudo pacman -S xdotool
 // - X11 display server (Wayland support may vary)
 
 // getLinuxWindowGeometry attempts to get window geometry using xdotool
@@ -112,7 +116,10 @@ func (wpm *WindowPositionManager) SavePosition(ctx context.Context, windowID str
 			x, y, width, height = xX, xY, xWidth, xHeight
 		} else {
 			println("[WindowPos] xdotool failed - install xdotool for Linux position tracking")
-			println("[WindowPos] Run: sudo apt-get install xdotool")
+			println("[WindowPos] Debian/Ubuntu: sudo apt-get install xdotool")
+			println("[WindowPos] openSUSE/SUSE: sudo zypper install xdotool")
+			println("[WindowPos] Fedora/RHEL: sudo dnf install xdotool")
+			println("[WindowPos] Arch Linux: sudo pacman -S xdotool")
 			return
 		}
 	}

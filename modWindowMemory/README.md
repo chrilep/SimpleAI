@@ -29,7 +29,11 @@ Build tags (`//go:build`) ensure only the relevant platform file is compiled.
 
 - **Issue**: WindowGetPosition often returns (0,0) regardless of actual position
 - **Solution**: Falls back to `xdotool` to query X11 directly when Wails methods fail
-- **Requirements**: `sudo apt-get install xdotool` for reliable position tracking
+- **Requirements**: Install xdotool via your package manager:
+  - Debian/Ubuntu: `sudo apt-get install xdotool`
+  - openSUSE/SUSE: `sudo zypper install xdotool`
+  - Fedora/RHEL: `sudo dnf install xdotool`
+  - Arch Linux: `sudo pacman -S xdotool`
 - **Status**: Functional with xdotool; graceful degradation without it
 
 ### macOS
@@ -181,8 +185,28 @@ Manually sets a position (doesn't save to disk).
 
 For reliable window position tracking on Linux, install xdotool:
 
+**Debian/Ubuntu:**
+
 ```bash
 sudo apt-get install xdotool
+```
+
+**openSUSE/SUSE:**
+
+```bash
+sudo zypper install xdotool
+```
+
+**Fedora/RHEL:**
+
+```bash
+sudo dnf install xdotool
+```
+
+**Arch Linux:**
+
+```bash
+sudo pacman -S xdotool
 ```
 
 Without xdotool, the module will attempt to use Wails methods but may not be able to save positions if the window has been moved.

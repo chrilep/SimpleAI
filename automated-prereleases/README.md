@@ -22,9 +22,10 @@ Currently, automated prerelease builds are available for:
 
 **Note for Linux users**: Install `xdotool` for window position persistence:
 
-```bash
-sudo apt-get install xdotool
-```
+- Debian/Ubuntu: `sudo apt-get install xdotool`
+- openSUSE/SUSE: `sudo zypper install xdotool`
+- Fedora/RHEL: `sudo dnf install xdotool`
+- Arch Linux: `sudo pacman -S xdotool`
 
 Additional platforms (macOS) may be added in the future.
 
@@ -55,7 +56,7 @@ Prerelease builds are named with the format: `SimpleAI <version>.PRE.exe` (Windo
 1. Download the latest `SimpleAI-<version>.PRE` from this folder
 2. Make executable: `chmod +x SimpleAI-<version>.PRE`
 3. Run: `./SimpleAI-<version>.PRE`
-4. Install xdotool for window position memory: `sudo apt-get install xdotool`
+4. Install xdotool for window position memory (see distribution-specific commands above)
 
 ## Feedback
 
