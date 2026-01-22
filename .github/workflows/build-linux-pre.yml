@@ -33,7 +33,9 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libgtk-3-dev libwebkit2gtk-4.0-dev fuse libfuse2
+          sudo apt-get install -y build-essential libgtk-3-dev libwebkit2gtk-4.0-dev fuse libfuse2 file
+          wget -O /tmp/appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x /tmp/appimagetool
 
       - name: Install Wails
         timeout-minutes: 15
@@ -49,17 +51,47 @@ jobs:
           build="$v.PRE"
           echo "version=$build" >> $GITHUB_OUTPUT
 
-      - name: Build AppImage
+      - name: Build Wails app
         run: |
-          wails build -clean -ldflags "-X main.Version=${{ steps.version.outputs.version }}" -nsis=false -appimage
+          wails build -clean -ldflags "-X main.Version=${{ steps.version.outputs.version }}" -nsis=false
           if [ $? -ne 0 ]; then
             echo "Build failed!"
             exit 1
           fi
 
-      - name: Rename AppImage with version
+      - name: Create AppImage
         run: |
-          mv "build/bin/SimpleAI.AppImage" "build/bin/SimpleAI-${{ steps.version.outputs.version }}.AppImage"
+          # Create AppDir structure
+          mkdir -p AppDir/usr/bin
+          mkdir -p AppDir/usr/share/applications
+          mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
+
+          # Copy binary
+          cp build/bin/SimpleAI AppDir/usr/bin/SimpleAI
+
+          # Copy desktop file
+          cp build/linux/SimpleAI.desktop AppDir/usr/share/applications/
+
+          # Copy icon
+          cp build/appicon.png AppDir/usr/share/icons/hicolor/512x512/apps/SimpleAI.png
+          cp build/appicon.png AppDir/SimpleAI.png
+
+          # Copy desktop file to root for AppImage
+          cp build/linux/SimpleAI.desktop AppDir/
+
+          # Create AppRun script
+          cat > AppDir/AppRun << 'EOF'
+          #!/bin/bash
+          SELF=$(readlink -f "$0")
+          HERE=${SELF%/*}
+          export PATH="${HERE}/usr/bin:${PATH}"
+          export LD_LIBRARY_PATH="${HERE}/usr/lib:${LD_LIBRARY_PATH}"
+          exec "${HERE}/usr/bin/SimpleAI" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          # Build AppImage
+          ARCH=x86_64 /tmp/appimagetool AppDir "build/bin/SimpleAI-${{ steps.version.outputs.version }}.AppImage"
 
       - name: Upload Prerelease AppImage
         uses: actions/upload-artifact@v4
