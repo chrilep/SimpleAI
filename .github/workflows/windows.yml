@@ -3,14 +3,14 @@ name: Build SimpleAI (Windows Only)
 on:
   push:
     branches:
-      - "**"        # run on every branch push (prereleases)
+      - "**"        # prerelease builds on every push
     tags:
-      - "v*"        # run on version tags (releases)
+      - "v*"        # full releases on version tags
   workflow_dispatch:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout
@@ -30,11 +30,11 @@ jobs:
       - name: Install NSIS
         run: choco install nsis -y
 
-      - name: Install Wails (Windows)
+      - name: Install Wails
         timeout-minutes: 15
         env:
-          GOFLAGS: "-v"          # force verbose output to avoid cancellation
-          GOTOOLCHAIN: "local"   # prevent auto-upgrade to Go 1.23
+          GOFLAGS: "-v"
+          GOTOOLCHAIN: "local"
         run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Read version from wails.json
@@ -42,8 +42,8 @@ jobs:
         shell: pwsh
         run: |
           $v = (Get-Content wails.json | ConvertFrom-Json).info.productVersion
-          $beta = "$v.BETA"
-          echo "version=$beta" >> $env:GITHUB_OUTPUT
+          $build = "$v.PRE"
+          echo "version=$build" >> $env:GITHUB_OUTPUT
 
       - name: Build application
         shell: pwsh
@@ -60,29 +60,23 @@ jobs:
           $v = "${{ steps.version.outputs.version }}"
           Rename-Item "build/bin/SimpleAI.exe" "SimpleAI $v.exe"
 
-      - name: Create ZIP
-        shell: pwsh
-        run: |
-          $v = "${{ steps.version.outputs.version }}"
-          Compress-Archive -Path "build/bin/SimpleAI $v.exe" -DestinationPath "SimpleAI $v.zip"
-
-      - name: Upload Beta ZIP
+      - name: Upload Prerelease EXE
         uses: actions/upload-artifact@v4
         with:
-          name: SimpleAI-${{ steps.version.outputs.version }}-beta
-          path: "SimpleAI ${{ steps.version.outputs.version }} windows.zip"
+          name: SimpleAI-${{ steps.version.outputs.version }}-pre
+          path: "SimpleAI ${{ steps.version.outputs.version }}.exe"
 
-      - name: Publish ZIP into repo
+      - name: Publish into repo
         if: github.ref_type == 'branch'
         shell: pwsh
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-      
-          mkdir downloads -ErrorAction Ignore
-      
-          Copy-Item "SimpleAI ${{ steps.version.outputs.version }}.zip" "automated-beta-builds/"
-      
-          git add downloads
-          git commit -m "Add beta/prerelease ${{ steps.version.outputs.version }}"
+
+          mkdir automated-prereleases -ErrorAction Ignore
+
+          Copy-Item "SimpleAI ${{ steps.version.outputs.version }}.exe" "automated-prereleases/"
+
+          git add automated-prereleases
+          git commit -m "Add prerelease ${{ steps.version.outputs.version }}"
           git push
