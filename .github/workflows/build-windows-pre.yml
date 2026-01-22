@@ -3,9 +3,9 @@ name: Build SimpleAI (Windows Only)
 on:
   push:
     branches:
-      - "**"
+      - "**"        # prerelease builds on every push
     tags:
-      - "v*"
+      - "v*"        # full releases on version tags
   workflow_dispatch:
 
 jobs:
@@ -30,8 +30,8 @@ jobs:
       - name: Install Wails
         timeout-minutes: 15
         env:
-          GOFLAGS: "-v"
-          GOTOOLCHAIN: "local"
+          GOFLAGS: "-v"          # force verbose output
+          GOTOOLCHAIN: "local"   # prevent auto-upgrade to Go 1.23+
         run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Read version from wails.json
@@ -55,7 +55,7 @@ jobs:
         shell: pwsh
         run: |
           $v = "${{ steps.version.outputs.version }}"
-          Rename-Item "build/bin/SimpleAI.exe" "build/bin/SimpleAI $v.exe"
+          Rename-Item -LiteralPath "build/bin/SimpleAI.exe" -NewName "SimpleAI $v.exe"
 
       - name: Upload Prerelease EXE
         uses: actions/upload-artifact@v4
