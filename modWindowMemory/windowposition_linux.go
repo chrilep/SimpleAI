@@ -35,13 +35,17 @@ import (
 // getLinuxWindowGeometry attempts to get window geometry using xdotool
 // This bypasses GTK/Wails issues by querying X11 directly
 func getLinuxWindowGeometry() (x, y, width, height int, ok bool) {
-	// Search for window by title pattern and get geometry in shell-parseable format
+	// Search for window by title pattern - get only the first/active window
 	cmd := exec.Command("xdotool", "search", "--name", "^SimpleAI", "getwindowgeometry", "--shell")
 	output, err := cmd.Output()
 	if err != nil {
 		// xdotool not installed or window not found
+		println("[WindowPos] xdotool command failed:", err.Error())
 		return 0, 0, 0, 0, false
 	}
+
+	outputStr := string(output)
+	println("[WindowPos] xdotool raw output:", outputStr)
 
 	// Parse xdotool output format:
 	// WINDOW=123456
@@ -49,29 +53,57 @@ func getLinuxWindowGeometry() (x, y, width, height int, ok bool) {
 	// Y=200
 	// WIDTH=800
 	// HEIGHT=600
-	lines := strings.Split(string(output), "\n")
+	lines := strings.Split(outputStr, "\n")
+
+	// Variables to track if we found all required values
+	foundX, foundY, foundWidth, foundHeight := false, false, false, false
+
 	for _, line := range lines {
-		parts := strings.Split(line, "=")
-		if len(parts) != 2 {
+		line = strings.TrimSpace(line)
+		if line == "" {
 			continue
 		}
-		val, _ := strconv.Atoi(parts[1])
-		switch parts[0] {
+
+		parts := strings.Split(line, "=")
+		if len(parts) != 2 {
+			println("[WindowPos] Skipping malformed line:", line)
+			continue
+		}
+
+		key := strings.TrimSpace(parts[0])
+		valueStr := strings.TrimSpace(parts[1])
+		val, err := strconv.Atoi(valueStr)
+		if err != nil {
+			println("[WindowPos] Failed to parse value for", key, ":", valueStr)
+			continue
+		}
+
+		switch key {
 		case "X":
 			x = val
+			foundX = true
 		case "Y":
 			y = val
+			foundY = true
 		case "WIDTH":
 			width = val
+			foundWidth = true
 		case "HEIGHT":
 			height = val
+			foundHeight = true
 		}
 	}
 
-	if width > 0 && height > 0 {
+	println("[WindowPos] Parsed values - X:", x, "Y:", y, "W:", width, "H:", height)
+	println("[WindowPos] Found flags - X:", foundX, "Y:", foundY, "W:", foundWidth, "H:", foundHeight)
+
+	// Validate that we got reasonable values
+	if foundWidth && foundHeight && width > 0 && height > 0 {
+		// Accept even if X/Y are 0 - could be valid screen position
 		return x, y, width, height, true
 	}
 
+	println("[WindowPos] Invalid or incomplete geometry data")
 	return 0, 0, 0, 0, false
 }
 
