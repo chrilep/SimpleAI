@@ -1,0 +1,83 @@
+name: Build SimpleAI (Linux Only)
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - "**" # prerelease builds on every push
+    tags:
+      - "v*" # full releases on version tags
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          check-latest: false
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libgtk-3-dev libwebkit2gtk-4.0-dev
+
+      - name: Install Wails
+        timeout-minutes: 15
+        env:
+          GOFLAGS: "-v" # force verbose output
+          GOTOOLCHAIN: "local" # prevent auto-upgrade to Go 1.23+
+        run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Read version from wails.json
+        id: version
+        run: |
+          v=$(jq -r '.info.productVersion' wails.json)
+          build="$v.PRE"
+          echo "version=$build" >> $GITHUB_OUTPUT
+
+      - name: Build application
+        run: |
+          wails build -clean -ldflags "-X main.Version=${{ steps.version.outputs.version }}"
+          if [ $? -ne 0 ]; then
+            echo "Build failed!"
+            exit 1
+          fi
+
+      - name: Rename binary with version
+        run: |
+          mv "build/bin/SimpleAI" "build/bin/SimpleAI-${{ steps.version.outputs.version }}"
+
+      - name: Upload Prerelease Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: SimpleAI-${{ steps.version.outputs.version }}-linux
+          path: "build/bin/SimpleAI-${{ steps.version.outputs.version }}"
+
+      - name: Publish into repo
+        if: github.ref_type == 'branch'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          mkdir -p automated-prereleases
+
+          cp "build/bin/SimpleAI-${{ steps.version.outputs.version }}" "automated-prereleases/"
+
+          git add "automated-prereleases/SimpleAI-${{ steps.version.outputs.version }}"
+          git commit -m "Add Linux prerelease ${{ steps.version.outputs.version }}"
+          git pull --rebase
+          git push
