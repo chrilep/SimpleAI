@@ -1,5 +1,7 @@
 # SimpleAI
 
+![SimpleAI Icon](img/repoIcon.png)
+
 > A lightweight desktop launcher for multiple AI chatbot services in dedicated windows
 
 SimpleAI is a cross-platform desktop application built with [Wails](https://wails.io) that provides quick access to popular AI chatbot services in standalone windows. Say goodbye to browser tabs cluttering your workflow!
