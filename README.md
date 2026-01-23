@@ -38,13 +38,15 @@ SimpleAI is a cross-platform desktop application built with [Wails](https://wail
 
 ### Linux
 
+**📖 [Vollständige Installations-Anleitung für Linux](INSTALL_LINUX.md)**
+
+**Schnellstart:**
+
 1. Download `SimpleAI.AppImage` from [automated-prereleases](automated-prereleases/)
 2. Make it executable: `chmod +x SimpleAI.AppImage`
 3. Run: `./SimpleAI.AppImage`
 
 **Optional - Add to Application Menu:**
-
-To integrate SimpleAI into your system menu with icon:
 
 ```bash
 ./SimpleAI.AppImage --appimage-extract
@@ -52,10 +54,6 @@ cd squashfs-root
 ./integrate.sh
 cd .. && rm -rf squashfs-root
 ```
-
-This adds SimpleAI to your application launcher with proper icon and metadata.
-
-**Note:** You can also use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) for automatic integration.
 
 ### macOS
 
