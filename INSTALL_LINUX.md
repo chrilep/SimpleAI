@@ -24,9 +24,10 @@ chmod +x ~/bin/SimpleAI.AppImage
 
 # Run from console to test if it works (see some logging if currently active)
 ~/bin/SimpleAI.AppImage
+
 ```
 
-## 3. Install it for current user (optional, no root needed)
+## 3. Install it for current user (optional, no root needed, only once needed)
 
 ```bash
 # Change to directory
@@ -41,6 +42,7 @@ cd squashfs-root
 
 # Clean up extracted files
 cd .. && rm -rf squashfs-root
+
 ```
 
 **That's it!** SimpleAI now appears in your desktop environment's application menu (KDE, GNOME, XFCE, etc.) with an icon.
