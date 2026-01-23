@@ -1,66 +1,66 @@
-# SimpleAI Installation für Linux
+# SimpleAI Installation for Linux
 
-## Schnellstart
+## Quick Start
 
-SimpleAI läuft als portable AppImage-Datei auf allen Linux-Distributionen (Debian, Ubuntu, SUSE, Arch, Fedora, etc.).
+SimpleAI runs as a portable AppImage file on all Linux distributions (Debian, Ubuntu, SUSE, Arch, Fedora, etc.).
 
 ### 1. Download
 
-Lade die neueste Version herunter:
+Download the latest version:
 
 **[Download SimpleAI.AppImage](https://github.com/chrilep/SimpleAI/raw/main/automated-prereleases/SimpleAI.AppImage)**
 
-Die Datei landet in deinem `Downloads`-Ordner.
+The file will be saved to your `Downloads` folder.
 
 ### 2. Installation
 
 ```bash
-# Verschiebe AppImage nach ~/bin
+# Move AppImage to ~/bin
 mkdir -p ~/bin
 mv ~/Downloads/SimpleAI.AppImage ~/bin/
 
-# Mache die Datei ausführbar
+# Make the file executable
 chmod +x ~/bin/SimpleAI.AppImage
 ```
 
-### 3. Starten
+### 3. Launch
 
 ```bash
 ~/bin/SimpleAI.AppImage
 ```
 
-**Fertig!** SimpleAI läuft jetzt.
+**Done!** SimpleAI is now running.
 
 ---
 
-## Optional: System-Integration
+## Optional: System Integration
 
-Wenn du SimpleAI im Anwendungsmenü mit Icon haben möchtest:
+If you want SimpleAI in your application menu with an icon:
 
 ```bash
-# Wechsle ins Verzeichnis
+# Change to directory
 cd ~/bin
 
-# Extrahiere das AppImage
+# Extract the AppImage temporarily
 ./SimpleAI.AppImage --appimage-extract
 
-# Führe das Integrations-Script aus
+# Run the integration script with path to AppImage
 cd squashfs-root
-./integrate.sh
+./integrate.sh ~/bin/SimpleAI.AppImage
 
-# Aufräumen
+# Clean up extracted files
 cd .. && rm -rf squashfs-root
 ```
 
-**Das war's!** SimpleAI erscheint jetzt im Anwendungsmenü deiner Desktop-Umgebung (KDE, GNOME, XFCE, etc.) mit Icon.
+**That's it!** SimpleAI now appears in your desktop environment's application menu (KDE, GNOME, XFCE, etc.) with an icon.
 
 ---
 
-## Anforderungen
+## Requirements
 
-### Für Window-Positionierung (empfohlen)
+### For Window Positioning (Recommended)
 
-SimpleAI speichert Fenster-Positionen. Dafür wird `xdotool` benötigt:
+SimpleAI saves window positions. This requires `xdotool`:
 
 **Debian/Ubuntu:**
 
@@ -86,41 +86,41 @@ sudo dnf install xdotool
 sudo pacman -S xdotool
 ```
 
-Ohne `xdotool` öffnen sich Fenster bei jedem Start an der Standard-Position.
+Without `xdotool`, windows will open at the default position on every start.
 
 ---
 
 ## Updates
 
-Neue Versionen installieren:
+To install new versions:
 
 ```bash
-# Alte Version löschen
+# Delete old version
 rm ~/bin/SimpleAI.AppImage
 
-# Neue Version herunterladen und Schritte 1-3 wiederholen
+# Download new version and repeat steps 1-3
 ```
 
-Falls du die System-Integration genutzt hast, musst du diese **nicht** erneut durchführen - die Verknüpfung funktioniert automatisch weiter.
+If you used system integration, you **don't** need to repeat it - the shortcut will continue to work automatically.
 
 ---
 
-## Deinstallation
+## Uninstallation
 
-### AppImage entfernen:
+### Remove AppImage:
 
 ```bash
 rm ~/bin/SimpleAI.AppImage
 ```
 
-### System-Integration entfernen:
+### Remove system integration:
 
 ```bash
 rm ~/.local/share/applications/SimpleAI.desktop
 rm ~/.local/share/icons/hicolor/*/apps/simpleai.png
 ```
 
-### Einstellungen löschen (optional):
+### Delete settings (optional):
 
 ```bash
 rm -rf ~/.config/SimpleAI
@@ -131,43 +131,59 @@ rm -rf ~/.cache/SimpleAI
 
 ## Troubleshooting
 
-### "Permission denied" beim Starten
+### "Permission denied" when starting
 
-Die Datei ist nicht ausführbar:
+The file is not executable:
 
 ```bash
 chmod +x ~/bin/SimpleAI.AppImage
 ```
 
-### Kein Icon im Dateimanager
+### No icon in file manager
 
-Das ist normal für portable AppImages. Nutze die System-Integration (siehe oben), um ein Icon zu erhalten.
+This is normal for portable AppImages. Use system integration (see above) to get an icon.
 
-### Fenster-Positionen werden nicht gespeichert
+### Window positions are not saved
 
-Installiere `xdotool` (siehe Anforderungen).
+Install `xdotool` (see Requirements).
 
-### SimpleAI erscheint nicht im Anwendungsmenü
+### SimpleAI doesn't appear in application menu
 
-Führe das Integrations-Script erneut aus oder aktualisiere die Desktop-Datenbank manuell:
+Run the integration script again or manually update the desktop database:
 
 ```bash
 update-desktop-database ~/.local/share/applications/
 ```
 
+### Error: "Program not found" or "squashfs-root not found"
+
+This happens if you ran an older version of the integration script. Fix it by removing the old desktop file and running integration again:
+
+```bash
+# Remove old desktop file
+rm ~/.local/share/applications/SimpleAI.desktop
+
+# Extract AppImage and run integration with correct path
+cd ~/bin
+./SimpleAI.AppImage --appimage-extract
+cd squashfs-root
+./integrate.sh ~/bin/SimpleAI.AppImage
+cd .. && rm -rf squashfs-root
+```
+
 ---
 
-## Hinweise
+## Notes
 
-- **Kein sudo nötig**: Führe alle Befehle als normaler Benutzer aus
-- **Portable**: Die AppImage kann auch von USB-Sticks oder anderen Orten gestartet werden
-- **Auto-Updates**: Nutze den GitHub-Link oben - die Datei wird bei jedem Commit automatisch aktualisiert
+- **No sudo required**: Run all commands as a regular user
+- **Portable**: The AppImage can also be launched from USB drives or other locations
+- **Auto-updates**: Use the GitHub link above - the file is automatically updated with every commit
 
 ---
 
 ## Support
 
-Bei Problemen oder Fragen:
+For issues or questions:
 
 - [GitHub Issues](https://github.com/chrilep/SimpleAI/issues)
 - E-Mail: christian@lepthien.info

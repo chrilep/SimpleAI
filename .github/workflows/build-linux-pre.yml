@@ -120,14 +120,29 @@ jobs:
           cat > AppDir/integrate.sh << 'EOF'
           #!/bin/bash
           # SimpleAI System Integration Script
+          # Usage: ./integrate.sh /path/to/SimpleAI.AppImage
           # Run this to add SimpleAI to your application menu with icon
 
+          if [ $# -eq 0 ]; then
+            echo "Error: Please provide the path to SimpleAI.AppImage"
+            echo "Usage: $0 /path/to/SimpleAI.AppImage"
+            exit 1
+          fi
+
+          APPIMAGE_PATH="$(readlink -f "$1")"
+
+          if [ ! -f "$APPIMAGE_PATH" ]; then
+            echo "Error: AppImage not found at: $APPIMAGE_PATH"
+            exit 1
+          fi
+
           echo "Installing SimpleAI to system menu..."
+          echo "AppImage location: $APPIMAGE_PATH"
 
           # Copy desktop file
           mkdir -p ~/.local/share/applications
           cp usr/share/applications/SimpleAI.desktop ~/.local/share/applications/
-          sed -i "s|Exec=SimpleAI|Exec=$(readlink -f "$0" | sed 's|/integrate.sh||')|" ~/.local/share/applications/SimpleAI.desktop
+          sed -i "s|Exec=SimpleAI|Exec=$APPIMAGE_PATH|" ~/.local/share/applications/SimpleAI.desktop
 
           # Copy icons
           for size in 256 128 64 48; do
