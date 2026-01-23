@@ -17,8 +17,8 @@ These are **development builds** and may contain:
 
 Currently, automated prerelease builds are available for:
 
-- ✅ **Windows** (64-bit)
-- ✅ **Linux** (64-bit)
+- ✅ **Windows** (64-bit, portable app)
+- ✅ **Linux** (64-bit, portable app, see [here](../INSTALL_LINUX.md) for per user installation)
 
 **Note for Linux users**: Install `xdotool` for window position persistence:
 
@@ -37,7 +37,7 @@ Additional platforms (macOS) may be added in the future.
 
 ## Versioning
 
-Prerelease builds are named with the format: `SimpleAI <version>.PRE.exe` (Windows) or `SimpleAI-<version>.PRE` (Linux)
+Prerelease builds usually newer that the latest release versions. Check last commit message.
 
 - Version number comes from `wails.json` → `info.productVersion`
 - `.PRE` suffix indicates prerelease/development build
