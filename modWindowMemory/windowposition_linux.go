@@ -254,30 +254,55 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 			println("[WindowPos][DEBUG] Applied size using xdotool")
 		}
 
-		// Verify position was actually applied
+		// Monitor and re-apply position if window manager moves it
+		// GTK/WM may reposition the window after initial placement
+		const monitorAttempts = 20  // Monitor for 2 seconds (20 x 100ms)
+		const monitorInterval = 100 // milliseconds
+
 		if dbg {
-			println("[WindowPos][DEBUG] Verifying final position...")
+			println("[WindowPos][DEBUG] Starting position monitoring for 2 seconds...")
 		}
 
-		actualX, actualY, actualWidth, actualHeight, ok := getLinuxWindowGeometry(dbg)
-		if ok {
-			if dbg {
-				println("[WindowPos][DEBUG] Final position - X:", actualX, "Y:", actualY, "W:", actualWidth, "H:", actualHeight)
-			}
-			if actualX == pos.X && actualY == pos.Y {
-				if dbg {
-					println("[WindowPos][DEBUG] ✓ Position verified successfully")
+		for i := 0; i < monitorAttempts; i++ {
+			exec.Command("sleep", "0.1").Run()
+
+			actualX, actualY, actualWidth, actualHeight, ok := getLinuxWindowGeometry(dbg)
+			if !ok {
+				if dbg && i == 0 {
+					println("[WindowPos][DEBUG] Could not verify position (getLinuxWindowGeometry failed)")
 				}
-			} else {
+				continue
+			}
+
+			if i == 0 && dbg {
+				println("[WindowPos][DEBUG] Initial verification - X:", actualX, "Y:", actualY, "W:", actualWidth, "H:", actualHeight)
+			}
+
+			// Check if position drifted
+			if actualX != pos.X || actualY != pos.Y {
 				if dbg {
-					println("[WindowPos][DEBUG] ✗ WARNING: Position mismatch - Expected:", pos.X, pos.Y, "Got:", actualX, actualY)
-					println("[WindowPos][DEBUG] Position delta - ΔX:", actualX-pos.X, "ΔY:", actualY-pos.Y)
+					println("[WindowPos][DEBUG] ⚠ Position drift detected at", i*monitorInterval, "ms - Expected:", pos.X, pos.Y, "Got:", actualX, actualY, "ΔX:", actualX-pos.X, "ΔY:", actualY-pos.Y)
+					println("[WindowPos][DEBUG] Re-applying position...")
 				}
+
+				// Re-apply position
+				cmd := exec.Command("xdotool", "search", "--name", "^SimpleAI", "windowmove",
+					strconv.Itoa(pos.X), strconv.Itoa(pos.Y))
+				if err := cmd.Run(); err != nil {
+					if dbg {
+						println("[WindowPos][DEBUG] Failed to re-apply position:", err.Error())
+					}
+				} else if dbg {
+					println("[WindowPos][DEBUG] Position re-applied")
+				}
+			} else if i == monitorAttempts-1 && dbg {
+				// Last check - position is stable
+				println("[WindowPos][DEBUG] ✓ Position stable at X:", actualX, "Y:", actualY, "after", i*monitorInterval, "ms")
 			}
-		} else {
-			if dbg {
-				println("[WindowPos][DEBUG] Could not verify position (getLinuxWindowGeometry failed)")
-			}
+		}
+
+		if dbg {
+			println("[WindowPos][DEBUG] Position monitoring complete")
 		}
 	}()
 }
