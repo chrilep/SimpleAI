@@ -38,9 +38,9 @@ SimpleAI is a cross-platform desktop application built with [Wails](https://wail
 
 ### Linux
 
-**📖 [Vollständige Installations-Anleitung für Linux](INSTALL_LINUX.md)**
+**📖 [Complete Installation Guide for Linux](INSTALL_LINUX.md)**
 
-**Schnellstart:**
+**Quick Start:**
 
 1. Download `SimpleAI.AppImage` from [automated-prereleases](automated-prereleases/)
 2. Make it executable: `chmod +x SimpleAI.AppImage`
