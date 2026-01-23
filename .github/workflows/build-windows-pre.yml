@@ -2,13 +2,13 @@ name: Build SimpleAI (Windows Only)
 
 permissions:
   contents: write
-  
+
 on:
   push:
     branches:
-      - "**"        # prerelease builds on every push
+      - "**" # prerelease builds on every push
     tags:
-      - "v*"        # full releases on version tags
+      - "v*" # full releases on version tags
   workflow_dispatch:
 
 jobs:
@@ -33,50 +33,37 @@ jobs:
       - name: Install Wails
         timeout-minutes: 15
         env:
-          GOFLAGS: "-v"          # force verbose output
-          GOTOOLCHAIN: "local"   # prevent auto-upgrade to Go 1.23+
+          GOFLAGS: "-v"
+          GOTOOLCHAIN: "local"
         run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Read version from wails.json
-        id: version
-        shell: pwsh
-        run: |
-          $v = (Get-Content wails.json | ConvertFrom-Json).info.productVersion
-          $build = "$v.PRE"
-          echo "version=$build" >> $env:GITHUB_OUTPUT
 
       - name: Build application
         shell: pwsh
         run: |
-          wails build -clean -ldflags "-X main.Version=${{ steps.version.outputs.version }}"
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "Build failed!" -ForegroundColor Red
-            exit $LASTEXITCODE
-          }
+          $VERSION = (Get-Content wails.json | ConvertFrom-Json).info.productVersion + ".PRE"
+          wails build -clean -ldflags "-X main.Version=$VERSION"
 
-      - name: Rename EXE with version
+      - name: Rename EXE
         shell: pwsh
         run: |
-          $v = "${{ steps.version.outputs.version }}"
-          Rename-Item -LiteralPath "build/bin/SimpleAI.exe" -NewName "SimpleAI-windows $v.exe"
+          $VERSION = (Get-Content wails.json | ConvertFrom-Json).info.productVersion + ".PRE"
+          Rename-Item "build/bin/SimpleAI.exe" "SimpleAI-windows $VERSION.exe"
 
       - name: Upload Prerelease EXE
         uses: actions/upload-artifact@v4
         with:
-          name: SimpleAI-windows-${{ steps.version.outputs.version }}.exe
-          path: "build/bin/SimpleAI-windows ${{ steps.version.outputs.version }}.exe"
+          name: SimpleAI-windows
+          path: "build/bin/SimpleAI-windows *.exe"
 
       - name: Publish into repo
         if: github.ref_type == 'branch'
         shell: pwsh
         run: |
+          $VERSION = (Get-Content wails.json | ConvertFrom-Json).info.productVersion + ".PRE"
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-
           mkdir automated-prereleases -ErrorAction Ignore
-
-          Copy-Item "build/bin/SimpleAI-windows ${{ steps.version.outputs.version }}.exe" "automated-prereleases/"
-
-          git add "automated-prereleases/SimpleAI-windows ${{ steps.version.outputs.version }}.exe"
-          git commit -m "Add prerelease ${{ steps.version.outputs.version }}"
+          Copy-Item "build/bin/SimpleAI-windows $VERSION.exe" automated-prereleases/
+          git add "automated-prereleases/SimpleAI-windows $VERSION.exe"
+          git commit -m "Update Windows prerelease $VERSION"
           git push

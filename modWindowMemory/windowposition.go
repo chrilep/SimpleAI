@@ -142,43 +142,54 @@ func (wpm *WindowPositionManager) SetPosition(pageID string, x, y, width, height
 }
 
 // validateAndCorrectPosition ensures window position is within visible screen bounds.
-// Returns corrected position coordinates that keep the window fully visible.
+// Returns corrected position and size to keep the window fully visible.
 //
 // Parameters:
 //   - x, y: requested window position
 //   - width, height: window dimensions
 //   - screenWidth, screenHeight: primary screen dimensions
 //
-// Returns corrected x, y coordinates.
-func validateAndCorrectPosition(x, y, width, height, screenWidth, screenHeight int) (int, int) {
-	const minVisibleOffset = 20 // Minimum pixels that must remain visible
-
+// Returns corrected x, y, width, height coordinates.
+func validateAndCorrectPosition(x, y, width, height, screenWidth, screenHeight int) (int, int, int, int) {
 	correctedX := x
 	correctedY := y
+	correctedWidth := width
+	correctedHeight := height
 
-	// Ensure window is not too far left
-	if correctedX < -width+minVisibleOffset {
-		correctedX = -width + minVisibleOffset
+	// First, ensure window size fits within screen
+	if correctedWidth > screenWidth {
+		correctedWidth = screenWidth
+		println("[WindowPos] Width reduced from", width, "to", correctedWidth, "to fit screen")
+	}
+	if correctedHeight > screenHeight {
+		correctedHeight = screenHeight
+		println("[WindowPos] Height reduced from", height, "to", correctedHeight, "to fit screen")
 	}
 
-	// Ensure window is not too far right
-	if correctedX > screenWidth-minVisibleOffset {
-		correctedX = screenWidth - minVisibleOffset
+	// Then, adjust position to keep window fully visible
+	// Check left edge
+	if correctedX < 0 {
+		correctedX = 0
 	}
 
-	// Ensure window is not too far up (negative Y = above screen)
+	// Check right edge
+	if correctedX+correctedWidth > screenWidth {
+		correctedX = screenWidth - correctedWidth
+	}
+
+	// Check top edge
 	if correctedY < 0 {
 		correctedY = 0
 	}
 
-	// Ensure window is not too far down
-	if correctedY > screenHeight-minVisibleOffset {
-		correctedY = screenHeight - minVisibleOffset
+	// Check bottom edge
+	if correctedY+correctedHeight > screenHeight {
+		correctedY = screenHeight - correctedHeight
 	}
 
-	if correctedX != x || correctedY != y {
-		println("[WindowPos] Position corrected from (", x, ",", y, ") to (", correctedX, ",", correctedY, ") to stay within screen bounds")
+	if correctedX != x || correctedY != y || correctedWidth != width || correctedHeight != height {
+		println("[WindowPos] Position/Size corrected from (", x, ",", y, ",", width, "x", height, ") to (", correctedX, ",", correctedY, ",", correctedWidth, "x", correctedHeight, ")")
 	}
 
-	return correctedX, correctedY
+	return correctedX, correctedY, correctedWidth, correctedHeight
 }

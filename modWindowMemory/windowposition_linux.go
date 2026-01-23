@@ -129,7 +129,7 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 		screenHeight := screens[0].Height
 
 		// Validate and correct position to stay within screen bounds
-		pos.X, pos.Y = validateAndCorrectPosition(pos.X, pos.Y, pos.Width, pos.Height, screenWidth, screenHeight)
+		pos.X, pos.Y, pos.Width, pos.Height = validateAndCorrectPosition(pos.X, pos.Y, pos.Width, pos.Height, screenWidth, screenHeight)
 	} else {
 		println("[WindowPos] Warning: Could not get screen dimensions, skipping bounds validation")
 	}
@@ -139,24 +139,55 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 	runtime.WindowSetSize(ctx, pos.Width, pos.Height)
 	runtime.WindowSetPosition(ctx, pos.X, pos.Y)
 
-	// Verify with xdotool if available, and re-apply if needed
-	// Give GTK a moment to process the window operations
+	// Apply position using xdotool with polling and timeout
 	go func() {
-		// Wait 100ms for GTK to settle
-		exec.Command("sleep", "0.1").Run()
+		const maxAttempts = 50   // 50 attempts at 100ms = 5 seconds timeout
+		const pollInterval = 100 // milliseconds
 
-		// Try to use xdotool to force position if Wails methods failed
-		cmd := exec.Command("xdotool", "search", "--name", "^SimpleAI", "windowmove",
-			strconv.Itoa(pos.X), strconv.Itoa(pos.Y))
-		if err := cmd.Run(); err == nil {
-			println("[WindowPos] Applied position using xdotool")
+		// Wait for window to be ready
+		windowFound := false
+		for attempt := 0; attempt < maxAttempts; attempt++ {
+			// Check if window exists and is ready
+			cmd := exec.Command("xdotool", "search", "--name", "^SimpleAI")
+			if output, err := cmd.Output(); err == nil && len(output) > 0 {
+				windowFound = true
+				break
+			}
+			// Poll every 100ms
+			exec.Command("sleep", "0.1").Run()
 		}
 
-		// Also try to set size via xdotool
+		if !windowFound {
+			println("[WindowPos] ERROR: Window not found after 5 seconds timeout")
+			return
+		}
+
+		// Apply position now that window is ready
+		cmd := exec.Command("xdotool", "search", "--name", "^SimpleAI", "windowmove",
+			strconv.Itoa(pos.X), strconv.Itoa(pos.Y))
+		if err := cmd.Run(); err != nil {
+			println("[WindowPos] ERROR: Failed to set position:", err.Error())
+			return
+		}
+		println("[WindowPos] Applied position using xdotool")
+
+		// Apply size
 		cmd = exec.Command("xdotool", "search", "--name", "^SimpleAI", "windowsize",
 			strconv.Itoa(pos.Width), strconv.Itoa(pos.Height))
-		if err := cmd.Run(); err == nil {
-			println("[WindowPos] Applied size using xdotool")
+		if err := cmd.Run(); err != nil {
+			println("[WindowPos] ERROR: Failed to set size:", err.Error())
+			return
+		}
+		println("[WindowPos] Applied size using xdotool")
+
+		// Verify position was actually applied
+		actualX, actualY, _, _, ok := getLinuxWindowGeometry()
+		if ok {
+			if actualX == pos.X && actualY == pos.Y {
+				println("[WindowPos] Position verified successfully")
+			} else {
+				println("[WindowPos] WARNING: Position mismatch - Expected:", pos.X, pos.Y, "Got:", actualX, actualY)
+			}
 		}
 	}()
 }

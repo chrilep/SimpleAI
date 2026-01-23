@@ -40,65 +40,119 @@ jobs:
       - name: Install Wails
         timeout-minutes: 15
         env:
-          GOFLAGS: "-v" # force verbose output
-          GOTOOLCHAIN: "local" # prevent auto-upgrade to Go 1.23+
+          GOFLAGS: "-v"
+          GOTOOLCHAIN: "local"
         run: go install -v github.com/wailsapp/wails/v2/cmd/wails@latest
-
-      - name: Read version from wails.json
-        id: version
-        run: |
-          v=$(jq -r '.info.productVersion' wails.json)
-          build="$v.PRE"
-          echo "version=$build" >> $GITHUB_OUTPUT
 
       - name: Build Wails app
         run: |
-          wails build -clean -ldflags "-X main.Version=${{ steps.version.outputs.version }}" -nsis=false
-          if [ $? -ne 0 ]; then
-            echo "Build failed!"
-            exit 1
-          fi
+          VERSION=$(jq -r '.info.productVersion' wails.json).PRE
+          wails build -clean -ldflags "-X main.Version=$VERSION"
 
       - name: Create AppImage
         run: |
+          VERSION=$(jq -r '.info.productVersion' wails.json).PRE
+
           # Create AppDir structure
-          mkdir -p AppDir/usr/bin
-          mkdir -p AppDir/usr/share/applications
-          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-          mkdir -p AppDir/usr/share/icons/hicolor/128x128/apps
-          mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps
-          mkdir -p AppDir/usr/share/icons/hicolor/48x48/apps
+          mkdir -p AppDir/usr/{bin,share/{applications,metainfo,icons/hicolor/{256x256,128x128,64x64,48x48}/apps}}
 
           # Copy binary
-          cp build/bin/SimpleAI AppDir/usr/bin/SimpleAI
+          cp build/bin/SimpleAI AppDir/usr/bin/
 
-          # Resize and copy icon to standard sizes using ImageMagick
-          convert build/appicon.png -resize 256x256 AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png
-          convert build/appicon.png -resize 128x128 AppDir/usr/share/icons/hicolor/128x128/apps/simpleai.png
-          convert build/appicon.png -resize 64x64 AppDir/usr/share/icons/hicolor/64x64/apps/simpleai.png
-          convert build/appicon.png -resize 48x48 AppDir/usr/share/icons/hicolor/48x48/apps/simpleai.png
+          # Resize and copy icons
+          for size in 256 128 64 48; do
+            convert build/appicon.png -resize ${size}x${size} AppDir/usr/share/icons/hicolor/${size}x${size}/apps/simpleai.png
+          done
 
-          # Copy icon to AppImage root locations for maximum compatibility
+          # Copy icon to AppImage root
           cp AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png AppDir/simpleai.png
-          cp AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png AppDir/.DirIcon
+          cp AppDir/simpleai.png AppDir/.DirIcon
 
-          # Create desktop file with absolute icon path for AppImage
+          # Create AppStream metadata (removes build warning and helps software centers)
+          cat > AppDir/usr/share/metainfo/io.lepthien.SimpleAI.appdata.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <component type="desktop-application">
+            <id>io.lepthien.SimpleAI</id>
+            <metadata_license>CC0-1.0</metadata_license>
+            <project_license>AGPL-3.0-or-later</project_license>
+            <name>SimpleAI</name>
+            <summary>Lightweight desktop launcher for AI chatbot services</summary>
+            <description>
+              <p>SimpleAI provides quick access to popular AI chatbot services in standalone windows.</p>
+              <p>Supported services: ChatGPT, Claude, Copilot, Deepseek, Gemini, Grok, Meta AI, and Perplexity.</p>
+            </description>
+            <developer_name>Christian Lepthien</developer_name>
+            <url type="homepage">https://github.com/chrilep/SimpleAI</url>
+            <url type="bugtracker">https://github.com/chrilep/SimpleAI/issues</url>
+            <categories>
+              <category>Network</category>
+              <category>Utility</category>
+            </categories>
+            <releases>
+              <release version="VERSION_PLACEHOLDER" date="2026-01-23"/>
+            </releases>
+          </component>
+          EOF
+
+          # Insert actual version
+          sed -i "s/VERSION_PLACEHOLDER/$VERSION/" AppDir/usr/share/metainfo/io.lepthien.SimpleAI.appdata.xml
+
+          # Create desktop file
           cat > AppDir/SimpleAI.desktop << 'EOF'
           [Desktop Entry]
           Version=1.0
           Type=Application
           Name=SimpleAI
-          Comment=Simple frontend for AI chatbots
-          Exec=SimpleAI
+          GenericName=AI Chatbot Launcher
+          Comment=Quick access to ChatGPT, Claude, Gemini and other AI services
+          Exec=SimpleAI %U
           Icon=simpleai
           Terminal=false
-          Categories=Network;Chat;
-          Keywords=AI;ChatGPT;Claude;Gemini;Copilot;
+          Categories=Network;Utility;Chat;
+          Keywords=AI;ChatGPT;Claude;Gemini;Copilot;DeepSeek;Grok;Perplexity;
           StartupNotify=true
+          StartupWMClass=SimpleAI
           EOF
 
-          # Also copy to standard location
           cp AppDir/SimpleAI.desktop AppDir/usr/share/applications/
+
+          # Create integration script for manual system integration
+          cat > AppDir/integrate.sh << 'EOF'
+          #!/bin/bash
+          # SimpleAI System Integration Script
+          # Run this to add SimpleAI to your application menu with icon
+
+          echo "Installing SimpleAI to system menu..."
+
+          # Copy desktop file
+          mkdir -p ~/.local/share/applications
+          cp usr/share/applications/SimpleAI.desktop ~/.local/share/applications/
+          sed -i "s|Exec=SimpleAI|Exec=$(readlink -f "$0" | sed 's|/integrate.sh||')|" ~/.local/share/applications/SimpleAI.desktop
+
+          # Copy icons
+          for size in 256 128 64 48; do
+            mkdir -p ~/.local/share/icons/hicolor/${size}x${size}/apps
+            cp usr/share/icons/hicolor/${size}x${size}/apps/simpleai.png ~/.local/share/icons/hicolor/${size}x${size}/apps/
+          done
+
+          # Update icon cache
+          if command -v gtk-update-icon-cache &> /dev/null; then
+            gtk-update-icon-cache ~/.local/share/icons/hicolor/ -f 2>/dev/null || true
+          fi
+
+          # Update desktop database
+          if command -v update-desktop-database &> /dev/null; then
+            update-desktop-database ~/.local/share/applications/ 2>/dev/null || true
+          fi
+
+          echo "✓ Integration complete!"
+          echo "SimpleAI should now appear in your application menu."
+          echo ""
+          echo "To uninstall:"
+          echo "  rm ~/.local/share/applications/SimpleAI.desktop"
+          echo "  rm ~/.local/share/icons/hicolor/*/apps/simpleai.png"
+          EOF
+          chmod +x AppDir/integrate.sh
 
           # Create AppRun script
           cat > AppDir/AppRun << 'EOF'
@@ -111,26 +165,24 @@ jobs:
           EOF
           chmod +x AppDir/AppRun
 
-          # Build AppImage with proper icon embedding
-          ARCH=x86_64 /tmp/appimagetool AppDir "build/bin/SimpleAI-${{ steps.version.outputs.version }}.AppImage"
+          # Build AppImage
+          ARCH=x86_64 /tmp/appimagetool AppDir "build/bin/SimpleAI.AppImage"
 
       - name: Upload Prerelease AppImage
         uses: actions/upload-artifact@v4
         with:
-          name: SimpleAI-${{ steps.version.outputs.version }}-linux
-          path: "build/bin/SimpleAI-${{ steps.version.outputs.version }}.AppImage"
+          name: SimpleAI-linux
+          path: "build/bin/SimpleAI.AppImage"
 
       - name: Publish into repo
         if: github.ref_type == 'branch'
         run: |
+          VERSION=$(jq -r '.info.productVersion' wails.json).PRE
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-
           mkdir -p automated-prereleases
-
-          cp "build/bin/SimpleAI-${{ steps.version.outputs.version }}.AppImage" "automated-prereleases/"
-
-          git add "automated-prereleases/SimpleAI-${{ steps.version.outputs.version }}.AppImage"
-          git commit -m "Add Linux prerelease ${{ steps.version.outputs.version }}"
+          cp build/bin/SimpleAI.AppImage automated-prereleases/
+          git add automated-prereleases/SimpleAI.AppImage
+          git commit -m "Update Linux prerelease $VERSION"
           git pull --rebase
           git push

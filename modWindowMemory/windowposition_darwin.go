@@ -42,7 +42,7 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 		screenHeight := screens[0].Height
 
 		// Validate and correct position to stay within screen bounds
-		pos.X, pos.Y = validateAndCorrectPosition(pos.X, pos.Y, pos.Width, pos.Height, screenWidth, screenHeight)
+		pos.X, pos.Y, pos.Width, pos.Height = validateAndCorrectPosition(pos.X, pos.Y, pos.Width, pos.Height, screenWidth, screenHeight)
 	} else {
 		println("[WindowPos] Warning: Could not get screen dimensions, skipping bounds validation")
 	}

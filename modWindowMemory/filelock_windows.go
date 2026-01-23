@@ -18,9 +18,8 @@ const (
 
 // Windows API function
 var (
-	kernel32         = syscall.NewLazyDLL("kernel32.dll")
-	procLockFileEx   = kernel32.NewProc("LockFileEx")
-	procUnlockFileEx = kernel32.NewProc("UnlockFileEx")
+	kernel32       = syscall.NewLazyDLL("kernel32.dll")
+	procLockFileEx = kernel32.NewProc("LockFileEx")
 )
 
 // lockFileEx wraps the Windows LockFileEx API
