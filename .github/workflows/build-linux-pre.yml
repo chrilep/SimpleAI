@@ -184,5 +184,5 @@ jobs:
           cp build/bin/SimpleAI.AppImage automated-prereleases/
           git add automated-prereleases/SimpleAI.AppImage
           git commit -m "Update Linux prerelease $VERSION"
-          git pull --rebase
+          git pull --rebase --autostash
           git push

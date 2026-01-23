@@ -66,5 +66,5 @@ jobs:
           Copy-Item "build/bin/SimpleAI-windows $VERSION.exe" automated-prereleases/
           git add "automated-prereleases/SimpleAI-windows $VERSION.exe"
           git commit -m "Update Windows prerelease $VERSION"
-          git pull --rebase
+          git pull --rebase --autostash
           git push
