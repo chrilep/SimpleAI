@@ -33,7 +33,7 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libgtk-3-dev libwebkit2gtk-4.0-dev fuse libfuse2 file
+          sudo apt-get install -y build-essential libgtk-3-dev libwebkit2gtk-4.0-dev fuse libfuse2 file imagemagick
           wget -O /tmp/appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x /tmp/appimagetool
 
@@ -65,14 +65,22 @@ jobs:
           mkdir -p AppDir/usr/bin
           mkdir -p AppDir/usr/share/applications
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+          mkdir -p AppDir/usr/share/icons/hicolor/128x128/apps
+          mkdir -p AppDir/usr/share/icons/hicolor/64x64/apps
+          mkdir -p AppDir/usr/share/icons/hicolor/48x48/apps
 
           # Copy binary
           cp build/bin/SimpleAI AppDir/usr/bin/SimpleAI
 
-          # Copy icon to multiple locations for maximum compatibility
-          cp build/appicon.png AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png
-          cp build/appicon.png AppDir/simpleai.png
-          cp build/appicon.png AppDir/.DirIcon
+          # Resize and copy icon to standard sizes using ImageMagick
+          convert build/appicon.png -resize 256x256 AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png
+          convert build/appicon.png -resize 128x128 AppDir/usr/share/icons/hicolor/128x128/apps/simpleai.png
+          convert build/appicon.png -resize 64x64 AppDir/usr/share/icons/hicolor/64x64/apps/simpleai.png
+          convert build/appicon.png -resize 48x48 AppDir/usr/share/icons/hicolor/48x48/apps/simpleai.png
+
+          # Copy icon to AppImage root locations for maximum compatibility
+          cp AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png AppDir/simpleai.png
+          cp AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png AppDir/.DirIcon
 
           # Create desktop file with absolute icon path for AppImage
           cat > AppDir/SimpleAI.desktop << 'EOF'
