@@ -128,7 +128,7 @@ func getLinuxWindowGeometry(dbg bool) (x, y, width, height int, ok bool) {
 
 // RestorePosition restores window position (Linux implementation)
 func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID string) {
-	const dbg = true // Set to false to disable debug logging
+	const dbg = false // Set to true to enable detailed debug logging
 
 	if dbg {
 		println("[WindowPos][DEBUG] RestorePosition() called for", windowID)
@@ -266,11 +266,8 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 		for i := 0; i < monitorAttempts; i++ {
 			exec.Command("sleep", "0.1").Run()
 
-			actualX, actualY, actualWidth, actualHeight, ok := getLinuxWindowGeometry(dbg)
+			actualX, actualY, actualWidth, actualHeight, ok := getLinuxWindowGeometry(false) // Disable verbose logging in loop
 			if !ok {
-				if dbg && i == 0 {
-					println("[WindowPos][DEBUG] Could not verify position (getLinuxWindowGeometry failed)")
-				}
 				continue
 			}
 
@@ -309,7 +306,7 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 
 // SavePosition saves current window position (Linux implementation)
 func (wpm *WindowPositionManager) SavePosition(ctx context.Context, windowID string, storagePath string) {
-	const dbg = true // Set to false to disable debug logging
+	const dbg = false // Set to true to enable detailed debug logging
 
 	defer func() {
 		if r := recover(); r != nil {
