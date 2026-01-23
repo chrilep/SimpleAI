@@ -68,3 +68,23 @@ func isIconic(hwnd uintptr) bool {
 	ret, _, _ := procIsIconic.Call(hwnd)
 	return ret != 0
 }
+
+// findAndActivateWindow searches for a window with the given title and activates it
+// Returns true if window was found and activated, false otherwise
+func findAndActivateWindow(windowTitle string) (bool, error) {
+	// Use native Go syscall for direct Windows API access - much faster than PowerShell
+	hwnd, err := findWindowByTitle(windowTitle)
+	if err != nil || hwnd == 0 {
+		return false, nil
+	}
+
+	// Check if window is minimized (iconic)
+	if isIconic(hwnd) {
+		// SW_RESTORE = 9
+		showWindow(hwnd, 9)
+	}
+
+	// Bring window to foreground
+	setForegroundWindow(hwnd)
+	return true, nil
+}

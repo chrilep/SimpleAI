@@ -2,12 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
-	"strings"
 	"time"
 
 	"SimpleAI/modWindowMemory"
@@ -204,84 +201,7 @@ func (a *App) SaveWindowPositionManual() error {
 	return nil
 }
 
-// findAndActivateWindow searches for a window with the given title and activates it
-// Returns true if window was found and activated, false otherwise
-func findAndActivateWindow(windowTitle string) (bool, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return findAndActivateWindowWindows(windowTitle)
-	case "linux":
-		return findAndActivateWindowLinux(windowTitle)
-	case "darwin":
-		return findAndActivateWindowMacOS(windowTitle)
-	default:
-		return false, fmt.Errorf("unsupported platform: %s", runtime.GOOS)
-	}
-}
-
-// findAndActivateWindowWindows uses native Windows API to find and activate window
-func findAndActivateWindowWindows(windowTitle string) (bool, error) {
-	// Use native Go syscall for direct Windows API access - much faster than PowerShell
-	hwnd, err := findWindowByTitle(windowTitle)
-	if err != nil || hwnd == 0 {
-		return false, nil
-	}
-
-	// Check if window is minimized (iconic)
-	if isIconic(hwnd) {
-		// SW_RESTORE = 9
-		showWindow(hwnd, 9)
-	}
-
-	// Bring window to foreground
-	setForegroundWindow(hwnd)
-	return true, nil
-}
-
-// findAndActivateWindowLinux uses wmctrl or xdotool to find and activate window on Linux
-func findAndActivateWindowLinux(windowTitle string) (bool, error) {
-	// Try wmctrl first
-	cmd := exec.Command("wmctrl", "-a", windowTitle)
-	err := cmd.Run()
-	if err == nil {
-		return true, nil
-	}
-
-	// Fallback to xdotool
-	cmd = exec.Command("xdotool", "search", "--name", windowTitle, "windowactivate")
-	err = cmd.Run()
-	if err == nil {
-		return true, nil
-	}
-
-	// Neither tool worked or window not found
-	return false, nil
-}
-
-// findAndActivateWindowMacOS uses osascript to find and activate window on macOS
-func findAndActivateWindowMacOS(windowTitle string) (bool, error) {
-	// AppleScript to find and activate window by title
-	script := fmt.Sprintf(`
-		tell application "System Events"
-			set foundWindow to false
-			repeat with proc in (every process whose visible is true)
-				tell proc
-					if exists (windows whose name is "%s") then
-						set frontmost to true
-						set foundWindow to true
-						exit repeat
-					end if
-				end tell
-			end repeat
-			return foundWindow
-		end tell
-	`, windowTitle)
-
-	cmd := exec.Command("osascript", "-e", script)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return false, fmt.Errorf("osascript error: %v", err)
-	}
-
-	return strings.Contains(string(output), "true"), nil
-}
+// findAndActivateWindow is implemented in platform-specific files:
+// - app_windows.go: Uses native Windows API for fast window search
+// - app_linux.go: Uses wmctrl or xdotool
+// - app_darwin.go: Uses osascript with AppleScript
