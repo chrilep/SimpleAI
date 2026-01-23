@@ -12,7 +12,7 @@ Download the latest version:
 
 The file will be saved to your `Downloads` folder.
 
-### 2. Installation
+### 2. Copy it to your ~/bin/ folder and Run it (same if first use or update)
 
 ```bash
 # Move AppImage to ~/bin
@@ -21,21 +21,12 @@ mv ~/Downloads/SimpleAI.AppImage ~/bin/
 
 # Make the file executable
 chmod +x ~/bin/SimpleAI.AppImage
-```
 
-### 3. Launch
-
-```bash
+# Run from console to test if it works (see some logging if currently active)
 ~/bin/SimpleAI.AppImage
 ```
 
-**Done!** SimpleAI is now running.
-
----
-
-## Optional: System Integration
-
-If you want SimpleAI in your application menu with an icon:
+## 3. Install it for current user (optional, no root needed)
 
 ```bash
 # Change to directory
