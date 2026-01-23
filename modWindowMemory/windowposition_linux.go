@@ -134,13 +134,31 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 		println("[WindowPos] Warning: Could not get screen dimensions, skipping bounds validation")
 	}
 
+	// Try Wails runtime methods first (may work on some GTK versions)
 	// For GTK, set size before position (order matters)
 	runtime.WindowSetSize(ctx, pos.Width, pos.Height)
 	runtime.WindowSetPosition(ctx, pos.X, pos.Y)
 
-	// Note: We don't verify the position was set correctly on Linux
-	// because WindowGetPosition is unreliable. The position will be
-	// verified on next save attempt.
+	// Verify with xdotool if available, and re-apply if needed
+	// Give GTK a moment to process the window operations
+	go func() {
+		// Wait 100ms for GTK to settle
+		exec.Command("sleep", "0.1").Run()
+
+		// Try to use xdotool to force position if Wails methods failed
+		cmd := exec.Command("xdotool", "search", "--name", "^SimpleAI", "windowmove",
+			strconv.Itoa(pos.X), strconv.Itoa(pos.Y))
+		if err := cmd.Run(); err == nil {
+			println("[WindowPos] Applied position using xdotool")
+		}
+
+		// Also try to set size via xdotool
+		cmd = exec.Command("xdotool", "search", "--name", "^SimpleAI", "windowsize",
+			strconv.Itoa(pos.Width), strconv.Itoa(pos.Height))
+		if err := cmd.Run(); err == nil {
+			println("[WindowPos] Applied size using xdotool")
+		}
+	}()
 }
 
 // SavePosition saves current window position (Linux implementation)

@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Eliminated PowerShell initialization overhead and C# compilation delay
   - New `app_windows.go` with `EnumWindows`, `SetForegroundWindow`, `ShowWindow`, `IsIconic` implementations
   - Zero external dependencies - pure Go with Windows syscalls
+- **Linux Window Position Restore** - Fixed window position not restoring correctly
+  - Added xdotool fallback to force window position/size after GTK operations
+  - Dual-strategy approach: Wails runtime methods + xdotool enforcement
+  - 100ms delay allows GTK to settle before applying xdotool corrections
+  - Resolves GTK window manager position/size inconsistencies
 - **Screen Bounds Validation** - Windows are automatically kept within visible screen boundaries
   - Prevents windows from being positioned outside the visible display area
   - Ensures at least 20 pixels of the window remain visible on screen
