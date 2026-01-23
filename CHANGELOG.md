@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-23
+
+### Added
+
+- **Window Activation & Deduplication** - Prevents duplicate AI service windows
+  - Automatically detects and activates existing windows when opening the same service
+  - Platform-specific implementation: PowerShell (Windows), wmctrl/xdotool (Linux), AppleScript (macOS)
+  - Asynchronous window search with 2-second timeout to prevent UI blocking
+  - Restores minimized windows and brings them to foreground
+  - Falls back to opening new instance if existing window not found or on timeout
+- **Screen Bounds Validation** - Windows are automatically kept within visible screen boundaries
+  - Prevents windows from being positioned outside the visible display area
+  - Ensures at least 20 pixels of the window remain visible on screen
+  - Automatically corrects saved positions when restoring windows
+  - Protects against lost windows after monitor disconnection or resolution changes
+  - Cross-platform support via `modWindowMemory` module (Windows, Linux, macOS)
+  - Intelligent validation using `runtime.ScreenGetAll()` for primary screen dimensions
+- **File Locking for Window Positions** - Prevents race conditions in multi-instance setups
+  - Platform-specific file locking: `LockFileEx` (Windows), `flock` (Linux), `flock` (macOS)
+  - Retry mechanism with 50ms delays for concurrent write attempts
+  - Protects `windows.json` from corruption when multiple instances save simultaneously
+  - Separate platform files: `filelock_windows.go`, `filelock_linux.go`, `filelock_darwin.go`
+- **Service Navigation Architecture** - Enhanced launcher with full-window service integration
+  - Entire window navigates to selected AI service for seamless experience
+  - Replaces iframe approach (all AI services block iframes via CSP `frame-ancestors` directives)
+  - Direct service URLs for ChatGPT, Claude, Copilot, Deepseek, Gemini, Grok, Meta AI, and Perplexity
+  - No custom UI overlay possible due to external site control, providing native AI service experience
+  - Return to launcher via window reload/navigation controls
+- **Updated Application Icons** - Refreshed visual identity
+  - New optimized PNG icons (397KB → 376KB)
+  - New optimized ICO icons (340KB → 281KB)
+  - Better compression while maintaining visual quality
+
+### Changed
+
+- **Debug Output Control** - Configurable debug logging
+  - Debug prints now controlled by `dbg` flag in each function
+  - Set to `false` by default for cleaner production logs
+  - Easy to enable per-function for troubleshooting
+- **Linux Prerelease Build Workflow** - Enhanced automation
+  - AppImage format for better compatibility across distributions
+  - Improved build process with proper error handling
+- **modWindowMemory Module Documentation** - Enhanced README
+  - Added file locking documentation
+  - Updated usage examples with screen bounds validation
+  - Better platform-specific implementation notes
+
 ## [1.1.0] - 2026-01-22
 
 ### Added

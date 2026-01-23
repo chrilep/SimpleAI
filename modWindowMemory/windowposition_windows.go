@@ -23,13 +23,29 @@ import (
 
 // RestorePosition restores window position (Windows implementation)
 func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID string) {
+	wpm.mu.RLock()
 	pos, exists := wpm.positions[windowID]
+	wpm.mu.RUnlock()
+
 	if !exists || pos == nil || pos.Width == 0 || pos.Height == 0 {
 		println("[WindowPos] No saved position for", windowID)
 		return
 	}
 
 	println("[WindowPos] Restoring position for", windowID, "- X:", pos.X, "Y:", pos.Y, "W:", pos.Width, "H:", pos.Height)
+
+	// Get screen dimensions to validate position
+	screens, err := runtime.ScreenGetAll(ctx)
+	if err == nil && len(screens) > 0 {
+		// Use primary screen dimensions
+		screenWidth := screens[0].Width
+		screenHeight := screens[0].Height
+
+		// Validate and correct position to stay within screen bounds
+		pos.X, pos.Y = validateAndCorrectPosition(pos.X, pos.Y, pos.Width, pos.Height, screenWidth, screenHeight)
+	} else {
+		println("[WindowPos] Warning: Could not get screen dimensions, skipping bounds validation")
+	}
 
 	// Apply offset compensation (discovered on previous run)
 	targetX := pos.X - wpm.xOffset
@@ -44,8 +60,10 @@ func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID 
 
 	if offsetX != 0 || offsetY != 0 {
 		println("[WindowPos] Detected offset - X:", offsetX, "Y:", offsetY, "- Compensating immediately")
+		wpm.mu.Lock()
 		wpm.xOffset = offsetX
 		wpm.yOffset = offsetY
+		wpm.mu.Unlock()
 		// Re-apply with compensation
 		runtime.WindowSetPosition(ctx, pos.X-wpm.xOffset, pos.Y-wpm.yOffset)
 	}
@@ -74,12 +92,14 @@ func (wpm *WindowPositionManager) SavePosition(ctx context.Context, windowID str
 	// Reload from disk to preserve positions of other running instances
 	wpm.Load(storagePath)
 
+	wpm.mu.Lock()
 	wpm.positions[windowID] = &WindowPosition{
 		X:      x,
 		Y:      y,
 		Width:  width,
 		Height: height,
 	}
+	wpm.mu.Unlock()
 
 	wpm.Save(storagePath)
 }

@@ -23,13 +23,29 @@ import (
 
 // RestorePosition restores window position (macOS implementation)
 func (wpm *WindowPositionManager) RestorePosition(ctx context.Context, windowID string) {
+	wpm.mu.RLock()
 	pos, exists := wpm.positions[windowID]
+	wpm.mu.RUnlock()
+
 	if !exists || pos == nil || pos.Width == 0 || pos.Height == 0 {
 		println("[WindowPos] No saved position for", windowID)
 		return
 	}
 
 	println("[WindowPos] Restoring position for", windowID, "- X:", pos.X, "Y:", pos.Y, "W:", pos.Width, "H:", pos.Height)
+
+	// Get screen dimensions to validate position
+	screens, err := runtime.ScreenGetAll(ctx)
+	if err == nil && len(screens) > 0 {
+		// Use primary screen dimensions
+		screenWidth := screens[0].Width
+		screenHeight := screens[0].Height
+
+		// Validate and correct position to stay within screen bounds
+		pos.X, pos.Y = validateAndCorrectPosition(pos.X, pos.Y, pos.Width, pos.Height, screenWidth, screenHeight)
+	} else {
+		println("[WindowPos] Warning: Could not get screen dimensions, skipping bounds validation")
+	}
 
 	// macOS: Simple and reliable
 	runtime.WindowSetPosition(ctx, pos.X, pos.Y)
@@ -58,12 +74,14 @@ func (wpm *WindowPositionManager) SavePosition(ctx context.Context, windowID str
 	// Reload from disk to preserve positions of other running instances
 	wpm.Load(storagePath)
 
+	wpm.mu.Lock()
 	wpm.positions[windowID] = &WindowPosition{
 		X:      x,
 		Y:      y,
 		Width:  width,
 		Height: height,
 	}
+	wpm.mu.Unlock()
 
 	wpm.Save(storagePath)
 }

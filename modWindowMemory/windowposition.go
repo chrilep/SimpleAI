@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 )
 
 // WindowPositionManager handles persistent window positioning across platforms.
@@ -27,8 +29,9 @@ import (
 // Window IDs are typically the window title, allowing multiple windows to be tracked.
 type WindowPositionManager struct {
 	positions map[string]*WindowPosition
-	xOffset   int // Platform-specific offset X (e.g., Windows border)
-	yOffset   int // Platform-specific offset Y (e.g., Windows titlebar)
+	xOffset   int          // Platform-specific offset X (e.g., Windows border)
+	yOffset   int          // Platform-specific offset Y (e.g., Windows titlebar)
+	mu        sync.RWMutex // Protects positions map from concurrent access
 }
 
 // WindowPosition stores position and size for a single window
@@ -49,17 +52,27 @@ func NewWindowPositionManager() *WindowPositionManager {
 // Load reads saved window positions from disk
 // storagePath: full path to JSON file (e.g., "path/to/windows.json")
 func (wpm *WindowPositionManager) Load(storagePath string) error {
+	wpm.mu.Lock()
+	defer wpm.mu.Unlock()
+
 	// Ensure directory exists
 	dir := filepath.Dir(storagePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	data, err := os.ReadFile(storagePath)
+	// Use file locking to prevent race conditions with other instances
+	file, err := openWithLock(storagePath, os.O_RDONLY, false)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil // File doesn't exist yet, not an error
 		}
+		return err
+	}
+	defer file.Close()
+
+	data, err := os.ReadFile(storagePath)
+	if err != nil {
 		return err
 	}
 
@@ -69,12 +82,31 @@ func (wpm *WindowPositionManager) Load(storagePath string) error {
 // Save writes current window positions to disk
 // storagePath: full path to JSON file (e.g., "path/to/windows.json")
 func (wpm *WindowPositionManager) Save(storagePath string) error {
+	wpm.mu.RLock()
 	data, err := json.Marshal(wpm.positions)
+	wpm.mu.RUnlock()
+
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(storagePath, data, 0644)
+	// Use file locking with retry to handle concurrent writes from multiple instances
+	for attempts := 0; attempts < 5; attempts++ {
+		file, err := openWithLock(storagePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, true)
+		if err != nil {
+			if attempts < 4 {
+				time.Sleep(time.Millisecond * 50) // Wait before retry
+				continue
+			}
+			return err
+		}
+
+		_, err = file.Write(data)
+		file.Close()
+		return err
+	}
+
+	return nil
 }
 
 // RestorePosition restores window position for a given window ID.
@@ -92,15 +124,61 @@ func (wpm *WindowPositionManager) Save(storagePath string) error {
 
 // GetPosition returns the saved position for a page ID, or nil if not found
 func (wpm *WindowPositionManager) GetPosition(pageID string) *WindowPosition {
+	wpm.mu.RLock()
+	defer wpm.mu.RUnlock()
 	return wpm.positions[pageID]
 }
 
 // SetPosition sets the position for a page ID (doesn't save to disk)
 func (wpm *WindowPositionManager) SetPosition(pageID string, x, y, width, height int) {
+	wpm.mu.Lock()
+	defer wpm.mu.Unlock()
 	wpm.positions[pageID] = &WindowPosition{
 		X:      x,
 		Y:      y,
 		Width:  width,
 		Height: height,
 	}
+}
+
+// validateAndCorrectPosition ensures window position is within visible screen bounds.
+// Returns corrected position coordinates that keep the window fully visible.
+//
+// Parameters:
+//   - x, y: requested window position
+//   - width, height: window dimensions
+//   - screenWidth, screenHeight: primary screen dimensions
+//
+// Returns corrected x, y coordinates.
+func validateAndCorrectPosition(x, y, width, height, screenWidth, screenHeight int) (int, int) {
+	const minVisibleOffset = 20 // Minimum pixels that must remain visible
+
+	correctedX := x
+	correctedY := y
+
+	// Ensure window is not too far left
+	if correctedX < -width+minVisibleOffset {
+		correctedX = -width + minVisibleOffset
+	}
+
+	// Ensure window is not too far right
+	if correctedX > screenWidth-minVisibleOffset {
+		correctedX = screenWidth - minVisibleOffset
+	}
+
+	// Ensure window is not too far up (negative Y = above screen)
+	if correctedY < 0 {
+		correctedY = 0
+	}
+
+	// Ensure window is not too far down
+	if correctedY > screenHeight-minVisibleOffset {
+		correctedY = screenHeight - minVisibleOffset
+	}
+
+	if correctedX != x || correctedY != y {
+		println("[WindowPos] Position corrected from (", x, ",", y, ") to (", correctedX, ",", correctedY, ") to stay within screen bounds")
+	}
+
+	return correctedX, correctedY
 }

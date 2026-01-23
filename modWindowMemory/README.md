@@ -1,21 +1,54 @@
 # Window Position Manager
 
-Universal window position persistence module for Wails applications.
+Universal window position persistence module for Wails applications with thread-safety and multi-instance support.
 
 ## Overview
 
 This module provides platform-independent window position saving and restoring across Windows, Linux, and macOS. It handles platform-specific quirks transparently, making it easy to add window position memory to any Wails project.
 
+**Key Features:**
+
+- Thread-safe operations with mutex protection
+- File locking to prevent race conditions across multiple app instances
+- Platform-specific geometry handling
+- Automatic retry logic for concurrent file access
+
 ## Architecture
 
 ```
-windowposition.go          → Core logic (storage, JSON, manager struct)
+windowposition.go          → Core logic (storage, JSON, manager struct, mutexes)
 windowposition_windows.go  → Windows-specific geometry handling
 windowposition_linux.go    → Linux/GTK-specific geometry handling
 windowposition_darwin.go   → macOS-specific geometry handling
+filelock_windows.go        → Windows file locking (LockFileEx)
+filelock_linux.go          → Linux file locking (flock)
+filelock_darwin.go         → macOS file locking (flock)
 ```
 
-Build tags (`//go:build`) ensure only the relevant platform file is compiled.
+Build tags (`//go:build`) ensure only the relevant platform files are compiled.
+
+## Thread Safety & Multi-Instance Support
+
+### Mutexes
+
+- **RWMutex** protects the positions map from concurrent access
+- Read operations use `RLock()` for parallel reads
+- Write operations use `Lock()` for exclusive access
+
+### File Locking
+
+- Platform-specific file locking prevents corruption when multiple app instances save simultaneously
+- **Windows**: Uses `LockFileEx` API
+- **Linux/macOS**: Uses `flock` system call
+- Automatic retry with exponential backoff (up to 5 attempts)
+
+### Race Condition Prevention
+
+The module prevents these race conditions:
+
+1. **Multiple threads in same process** - Protected by mutexes
+2. **Multiple app instances** - Protected by file locks
+3. **Read-while-write** - RWMutex allows concurrent reads but exclusive writes
 
 ## Platform-Specific Behavior
 
@@ -23,12 +56,14 @@ Build tags (`//go:build`) ensure only the relevant platform file is compiled.
 
 - **Issue**: WindowGetPosition returns coordinates including titlebar/borders, but WindowSetPosition expects coordinates excluding decorations
 - **Solution**: Automatic offset detection and compensation on first restore
+- **File Locking**: Windows `LockFileEx` with `LOCKFILE_EXCLUSIVE_LOCK`
 - **Status**: Fully functional
 
 ### Linux/GTK
 
 - **Issue**: WindowGetPosition often returns (0,0) regardless of actual position
 - **Solution**: Falls back to `xdotool` to query X11 directly when Wails methods fail
+- **File Locking**: POSIX `flock` with `LOCK_EX`/`LOCK_SH`
 - **Requirements**: Install xdotool via your package manager:
   - Debian/Ubuntu: `sudo apt-get install xdotool`
   - openSUSE/SUSE: `sudo zypper install xdotool`
@@ -40,6 +75,7 @@ Build tags (`//go:build`) ensure only the relevant platform file is compiled.
 
 - **Issue**: None (macOS APIs are consistent)
 - **Solution**: Direct use of Wails runtime methods
+- **File Locking**: POSIX `flock` with `LOCK_EX`/`LOCK_SH`
 - **Status**: Fully functional
 
 ## Usage

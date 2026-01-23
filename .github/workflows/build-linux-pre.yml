@@ -64,20 +64,33 @@ jobs:
           # Create AppDir structure
           mkdir -p AppDir/usr/bin
           mkdir -p AppDir/usr/share/applications
-          mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
+          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
           # Copy binary
           cp build/bin/SimpleAI AppDir/usr/bin/SimpleAI
 
-          # Copy desktop file
-          cp build/linux/SimpleAI.desktop AppDir/usr/share/applications/
+          # Copy icon to multiple locations for maximum compatibility
+          cp build/appicon.png AppDir/usr/share/icons/hicolor/256x256/apps/simpleai.png
+          cp build/appicon.png AppDir/simpleai.png
+          cp build/appicon.png AppDir/.DirIcon
 
-          # Copy icon
-          cp build/appicon.png AppDir/usr/share/icons/hicolor/512x512/apps/SimpleAI.png
-          cp build/appicon.png AppDir/SimpleAI.png
+          # Create desktop file with absolute icon path for AppImage
+          cat > AppDir/SimpleAI.desktop << 'EOF'
+          [Desktop Entry]
+          Version=1.0
+          Type=Application
+          Name=SimpleAI
+          Comment=Simple frontend for AI chatbots
+          Exec=SimpleAI
+          Icon=simpleai
+          Terminal=false
+          Categories=Network;Chat;
+          Keywords=AI;ChatGPT;Claude;Gemini;Copilot;
+          StartupNotify=true
+          EOF
 
-          # Copy desktop file to root for AppImage
-          cp build/linux/SimpleAI.desktop AppDir/
+          # Also copy to standard location
+          cp AppDir/SimpleAI.desktop AppDir/usr/share/applications/
 
           # Create AppRun script
           cat > AppDir/AppRun << 'EOF'
@@ -90,7 +103,7 @@ jobs:
           EOF
           chmod +x AppDir/AppRun
 
-          # Build AppImage
+          # Build AppImage with proper icon embedding
           ARCH=x86_64 /tmp/appimagetool AppDir "build/bin/SimpleAI-${{ steps.version.outputs.version }}.AppImage"
 
       - name: Upload Prerelease AppImage
