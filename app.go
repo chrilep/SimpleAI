@@ -219,48 +219,23 @@ func findAndActivateWindow(windowTitle string) (bool, error) {
 	}
 }
 
-// findAndActivateWindowWindows uses PowerShell to find and activate window on Windows
+// findAndActivateWindowWindows uses native Windows API to find and activate window
 func findAndActivateWindowWindows(windowTitle string) (bool, error) {
-	dbg := false // Set to true for debug output
-	// PowerShell script to find window by title and bring it to front
-	script := fmt.Sprintf(`
-Add-Type @"
-using System;
-using System.Runtime.InteropServices;
-public class User32 {
-	[DllImport("user32.dll")]
-	[return: MarshalAs(UnmanagedType.Bool)]
-	public static extern bool SetForegroundWindow(IntPtr hWnd);
-	[DllImport("user32.dll")]
-	public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-	[DllImport("user32.dll")]
-	public static extern bool IsIconic(IntPtr hWnd);
-}
-"@
-$proc = Get-Process | Where-Object { $_.MainWindowTitle -eq '%s' } | Select-Object -First 1
-if ($proc) {
-	$hwnd = $proc.MainWindowHandle
-	if ([User32]::IsIconic($hwnd)) {
-		[User32]::ShowWindow($hwnd, 9) | Out-Null
-	}
-	[User32]::SetForegroundWindow($hwnd) | Out-Null
-	Write-Output "EXISTS"
-} else {
-	Write-Output "MISSING"
-}`, windowTitle)
-
-	if dbg {
-		println("[DEBUG] PowerShell script to find window:")
-		println(script)
+	// Use native Go syscall for direct Windows API access - much faster than PowerShell
+	hwnd, err := findWindowByTitle(windowTitle)
+	if err != nil || hwnd == 0 {
+		return false, nil
 	}
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-Command", script)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return false, fmt.Errorf("powershell error: %v", err)
+	// Check if window is minimized (iconic)
+	if isIconic(hwnd) {
+		// SW_RESTORE = 9
+		showWindow(hwnd, 9)
 	}
 
-	return strings.Contains(string(output), "EXISTS"), nil
+	// Bring window to foreground
+	setForegroundWindow(hwnd)
+	return true, nil
 }
 
 // findAndActivateWindowLinux uses wmctrl or xdotool to find and activate window on Linux

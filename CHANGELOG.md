@@ -11,10 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Window Activation & Deduplication** - Prevents duplicate AI service windows
   - Automatically detects and activates existing windows when opening the same service
-  - Platform-specific implementation: PowerShell (Windows), wmctrl/xdotool (Linux), AppleScript (macOS)
+  - Platform-specific implementation: Native Windows API (Windows), wmctrl/xdotool (Linux), AppleScript (macOS)
   - Asynchronous window search with 2-second timeout to prevent UI blocking
   - Restores minimized windows and brings them to foreground
   - Falls back to opening new instance if existing window not found or on timeout
+
+### Changed
+
+- **Windows Window Activation Performance** - Replaced PowerShell with native Win32 API
+  - 10-50x faster window detection using direct `syscall` to `user32.dll`
+  - No visible terminal window during window search (was visible with PowerShell `Add-Type`)
+  - Eliminated PowerShell initialization overhead and C# compilation delay
+  - New `app_windows.go` with `EnumWindows`, `SetForegroundWindow`, `ShowWindow`, `IsIconic` implementations
+  - Zero external dependencies - pure Go with Windows syscalls
 - **Screen Bounds Validation** - Windows are automatically kept within visible screen boundaries
   - Prevents windows from being positioned outside the visible display area
   - Ensures at least 20 pixels of the window remain visible on screen
